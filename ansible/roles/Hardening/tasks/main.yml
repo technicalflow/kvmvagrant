@@ -1,0 +1,22 @@
+---
+- name: install packages Ubuntu
+  apt:
+    pkg: ['ufw']
+  become: yes
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: install packages Centos
+  yum:
+    name:
+    - ufw
+    state: latest
+  become: yes
+  when: ansible_distribution == "CentOS"
+
+- name: check ufw status
+  shell: "ufw status"
+  args:
+    executable: /bin/bash
+  become: yes
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+

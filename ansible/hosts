@@ -1,0 +1,12 @@
+[Docker]
+dsm
+dsw1
+dsw2
+
+[LXD]
+lmanager
+lxdw1
+lxdw2
+
+[VMS]
+debian

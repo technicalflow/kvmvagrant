@@ -1,0 +1,15 @@
+---
+- hosts: all
+  roles:
+  - Update
+  - EpelRelease
+  - PackageInstall
+  - Usersconfig
+  - RestartMachines
+- hosts: debian10awx
+  roles:
+  - Hardening
+  - CopyConfig
+- hosts: dm, dw1, dw2
+  roles:
+  - DockerInstall

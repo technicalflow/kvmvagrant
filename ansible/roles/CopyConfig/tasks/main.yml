@@ -1,0 +1,41 @@
+---
+# - name: Copy ssh key
+#   shell: cat files/sshkey >> /home/vagrant/.ssh/authorized_keys
+#   become: yes
+ - name: Insert sshkey and validate it
+   blockinfile:
+     block: "{{ lookup('file', '../files/sshkey') }}"
+     dest: /home/vagrant/.ssh/authorized_keys
+     insertafter: vagrant
+     backup: yes
+#     validate: /usr/sbin/sshd -T -f %s
+     
+# - name: Insert a line at the end of a file.
+#   lineinfile:
+#     path: /home/vagrant/.ssh/authorized_keys
+#     line: last
+     
+# - name: Copy id_rsa key to guest
+#     copy:
+#       src: files/sshkey
+#       dest: /home/vagrant/.ssh/id_rsa
+#       owner: vagrant
+#       group: vagrant
+#       mode: 0600
+#     become: yes
+  
+# - name: "CopyingConfig"
+#   copy: src=../user/config.cfg dest=/etc/config.cfg owner=root group=root mode=644
+
+# - name: "Remove file"
+#   shell: creates=/home/user/config_backup mv /home/user/config /home/user/config 
+
+# - name: Update sshd configuration safely, avoid locking yourself out
+#   template:
+#     src: etc/ssh/sshd_config.j2
+#     dest: /etc/ssh/sshd_config
+#     owner: root
+#     group: root
+#     mode: '0600'
+#     validate: /usr/sbin/sshd -t -f %s
+#     backup: yes

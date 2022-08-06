@@ -1,0 +1,21 @@
+---
+- name: Reboot the server
+  tags: reboot
+  run_once: true
+  become: yes
+  shell: "sleep 2 && /sbin/shutdown -r now"
+  async: 1
+  poll: 0
+    
+- name: Wait for the reboot to complete if there was a change.
+  wait_for_connection:
+    connect_timeout: 120
+    sleep: 3
+    delay: 20
+    timeout: 120
+
+    #  - name: Check the Uptime of the servers
+    #    shell: "uptime"
+    #    register: Uptime
+
+    #  - debug: var=Uptime

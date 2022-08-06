@@ -1,0 +1,21 @@
+---
+  - name: Check if user exists
+    shell: id -u vagrant
+    register: user_exists
+    ignore_errors: true
+
+  - name: Change Password
+    become: yes
+    user:
+      name: vagrant
+      password: "{{ 'password' 'length=32' | password_hash('sha512') }}"
+      update_password: on_create
+    when: user_exists.rc == 0
+
+  - name: Remove the user 'ubuntu'
+    user:
+      name: ubuntu
+      state: absent
+      remove: yes
+    become: yes
+    when: ansible_distribution == "Ubuntu"
