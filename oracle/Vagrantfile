@@ -1,0 +1,40 @@
+  GNU nano 5.8                                                                                                                              Vagrantfile                                                                                                                                        
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "oraclelinux/8"
+  config.vm.box_url = "https://oracle.github.io/vagrant-projects/boxes/oraclelinux/8.json"
+
+  config.vm.hostname = "mskoracle8"
+  config.vm.network :private_network, ip: "192.168.90.125"
+#  config.vm.network :private_network
+
+#  config.vm.network :forwarded_port, guest: 80, host: 8090, host_ip: "0.0.0.0"
+
+#  config.vm.network :public_network,
+#      :dev => "bridge0",
+#      :mode => "bridge",
+#      :type => "bridge"
+#      :ip=>"192.168.70.221"
+
+  config.vm.synced_folder ".", "/vagrant_data", disabled: true
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.cpus = 2
+    libvirt.memory = 4096
+    libvirt.nested = true
+  end
+
+  config.vm.provision "shell", path: "./provision.sh", run: "once"
+
+  config.vm.provision "shell", inline: <<-SHELL
+#    yum update -y
+#    yum install -y httpd
+#    systemctl enable --now httpd.service
+    cat /etc/os-release
+    ip a | grep inet
+  SHELL
+
+end
+
