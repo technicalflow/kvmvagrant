@@ -4,17 +4,17 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/7"
   config.vm.hostname = "mskcentos7"
-  config.vm.network :private_network, ip: "192.168.100.124"
+#  config.vm.network :private_network, ip: "192.168.100.124"
 
 #  config.vm.network :forwarded_port, guest: 80, host: 8090, host_ip: "0.0.0.0"
 
-#  config.vm.network :public_network,
-#      :dev => "bridge0",
-#      :mode => "bridge",
-#      :type => "bridge"
-#      :ip=>"192.168.70.221"
+  config.vm.network :public_network,
+      :dev => "bridge0",
+      :mode => "bridge",
+      :type => "bridge",
+      :ip => "192.168.70.235"
 
-  config.vm.synced_folder ".", "/vagrant_data", disabled: true
+  config.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.cpus = 2
@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
-#    yum update -y
+    yum update -y
 #    yum install -y httpd
 #    systemctl enable --now httpd.service
     cat /etc/os-release
