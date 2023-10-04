@@ -20,6 +20,7 @@ sudo apt-get install -y \
     make \
     perl \
     curl \
+    gnupg \
     ntp \
     ca-certificates \
     apt-transport-https
@@ -31,6 +32,6 @@ sudo apt-get clean
 # sudo apt-get remove virtualbox-guest-utils -y
 # sudo sh /vagrant/VBoxLinuxAdditions.run
 
-ip a | grep inet 
+ip a | grep inet
 echo DONE
 

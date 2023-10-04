@@ -14,10 +14,13 @@ sudo apt-get install -y \
     gcc \
     make \
     curl \
-    perl
 
 # Turn swap off
 # sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+sudo swapoff -a
+sudo systemctl stop swap.target
+sudo systemctl disable swap.target
 
 uname -a
 hostname

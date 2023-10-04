@@ -2,14 +2,14 @@
 - hosts: all
   roles:
   - Update
+  - CopyConfig
   - EpelRelease
   - PackageInstall
   - Usersconfig
-  - RestartMachines
-- hosts: debian10awx
+#  - RestartMachines
+- hosts: debian11awx
   roles:
   - Hardening
-  - CopyConfig
-- hosts: dm, dw1, dw2
-  roles:
-  - DockerInstall
+# - hosts: dm, dw1, dw2
+#  roles:
+#  - DockerInstall

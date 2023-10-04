@@ -9,10 +9,10 @@ Vagrant.configure("2") do |config|
 #  config.vm.network :forwarded_port, guest: 80, host: 8090, host_ip: "0.0.0.0"
 
   config.vm.network :public_network,
-      :dev => "bridge0",
+      :dev => "br0",
       :mode => "bridge",
       :type => "bridge",
-      :ip => "192.168.70.235"
+      :ip => "192.168.50.235"
 
   config.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
 

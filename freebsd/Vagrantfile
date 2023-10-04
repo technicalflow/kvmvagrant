@@ -2,10 +2,10 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "oraclelinux/8"
-  config.vm.box_url = "https://oracle.github.io/vagrant-projects/boxes/oraclelinux/8.json"
+  config.vm.box = "roboxes/freebsd12"
 
-  config.vm.hostname = "mskoracle8"
+  config.vm.hostname = "freebsd12"
+
 #  config.vm.network "public_network", bridge: "enp2s0f0"
 #  config.vm.network :private_network, ip: "192.168.121.190"
 #  config.vm.network :private_network, :ip => "192.168.122.200"
@@ -15,28 +15,26 @@ Vagrant.configure("2") do |config|
       :dev => "br0",
       :mode => "bridge",
       :type => "bridge",
-      :ip => "192.168.50.236"
+      :ip => "192.168.50.225"
   config.vm.synced_folder ".", "/vagrant",
     owner: "vagrant", group: "vagrant"
 
   config.vm.provider :libvirt do |libvirt|
-    libvirt.cpus = 2
-    libvirt.memory = 2048
+    libvirt.cpus = 4
+    libvirt.memory = 1024
     libvirt.nested = true
   end
 
-  config.vm.provision :ansible do |ansible|
-    ansible.verbose = "v"
-#    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python2" }
-    ansible.playbook = "../ansible/playbook.yml"
+  config.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
+  config.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
+  config.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
 
   config.vm.provision "shell", path: "./provision.sh", run: "once"
 
-  config.vm.provision "shell", inline: <<-SHELL
-    cat /etc/os-release
-    ip a | grep inet
+  config.vm.provision "shell", run: "once", inline: <<-SHELL
+    uname -a
+    ifconfig | grep inet
   SHELL
 
-end
 end
 

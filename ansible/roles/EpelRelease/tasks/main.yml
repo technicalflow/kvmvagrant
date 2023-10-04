@@ -12,3 +12,11 @@
      state: latest
    become: True
    when: ansible_facts['os_family'] == 'Centos' and ansible_facts ['distribution_major_version'] == '7'
+
+ - name: Enable EPEL Repository on Oracle 8
+   dnf:
+     name: epel-release
+     state: latest
+   become: True
+   when: ansible_distribution == "OracleLinux"
+#   when: ansible_facts['os_family'] == 'OracleLinux' and ansible_facts ['distribution_major_version'] == '8'

@@ -3,7 +3,7 @@
 #   tasks:
    - name: install packages on Ubuntu
      apt: 
-       pkg: ['mc', 'htop', 'mtr-tiny', 'curl', 'wget']
+       pkg: ['mc', 'htop', 'curl', 'wget']
      become: yes
      when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
   
@@ -13,9 +13,9 @@
      become: yes
      when: ansible_distribution == "CentOS"
 
-#   - name: Enable EPEL Repository on CentOS 7
-#     yum:
-#       name: epel-release
-#       state: present
-#     become: yes
-#     when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '7'
+   - name: Install Packages on Oracle
+     dnf:
+       pkg: ['mc', 'curl', 'htop', 'nano', 'wget']
+     become: yes
+     when: ansible_distribution == "OracleLinux" 
+     

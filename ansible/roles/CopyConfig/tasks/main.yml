@@ -1,13 +1,13 @@
 ---
 # - name: Copy ssh key
-#   shell: cat files/sshkey >> /home/vagrant/.ssh/authorized_keys
+#   shell: cat files/ansible.pub >> /home/vagrant/.ssh/authorized_keys
 #   become: yes
  - name: Insert sshkey and validate it
    blockinfile:
-     block: "{{ lookup('file', '../files/sshkey') }}"
+     block: "{{ lookup('file', '../files/ansible.pub') }}"
      dest: /home/vagrant/.ssh/authorized_keys
      insertafter: vagrant
-     backup: yes
+     backup: no
 #     validate: /usr/sbin/sshd -T -f %s
      
 # - name: Insert a line at the end of a file.
