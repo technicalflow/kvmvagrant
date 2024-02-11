@@ -26,4 +26,3 @@ uname -a
 hostname
 
 echo DONE
-

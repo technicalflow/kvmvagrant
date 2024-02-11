@@ -3,22 +3,21 @@
 
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/7"
-  config.vm.hostname = "mskcentos7"
+  config.vm.hostname = "mskomce7test01"
 #  config.vm.network :private_network, ip: "192.168.100.124"
-
 #  config.vm.network :forwarded_port, guest: 80, host: 8090, host_ip: "0.0.0.0"
 
   config.vm.network :public_network,
       :dev => "br0",
       :mode => "bridge",
       :type => "bridge",
-      :ip => "192.168.50.235"
+      :ip => "192.168.50.232"
 
   config.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.cpus = 2
-    libvirt.memory = 2048
+    libvirt.memory = 1024
     libvirt.nested = true
   end
 

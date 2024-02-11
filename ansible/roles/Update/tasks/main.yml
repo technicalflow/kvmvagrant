@@ -12,13 +12,23 @@
       autoremove: yes
     become: yes
     when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
   - name: Upgrade all installed packages for CentOS
     yum:
       name: '*'
       state: latest
     become: yes
     when: ansible_distribution == "CentOS"
-  - name: Upgrade all installed packages for openSUSE
+
+  - name: Upgrade all installed packages for Oracle or RedHat
+    dnf:
+      name: '*'
+      state: latest
+    become: yes
+    when: ansible_distribution == "OracleLinux" or ansible_distribution == "RedHat"
+#   when: ansible_facts['os_family'] == 'OracleLinux' and ansible_facts ['distribution_major_version'] == '8'
+
+  - name: Upgrade all installed packages for openSUSE or SLES
     zypper:
       name: '*'
       state: latest

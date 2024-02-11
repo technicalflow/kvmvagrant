@@ -5,7 +5,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "oraclelinux/8"
   config.vm.box_url = "https://oracle.github.io/vagrant-projects/boxes/oraclelinux/8.json"
 
-  config.vm.hostname = "mskoracle8"
+  config.vm.hostname = "mskomol8test01"
 #  config.vm.network "public_network", bridge: "enp2s0f0"
 #  config.vm.network :private_network, ip: "192.168.121.190"
 #  config.vm.network :private_network, :ip => "192.168.122.200"
@@ -15,18 +15,22 @@ Vagrant.configure("2") do |config|
       :dev => "br0",
       :mode => "bridge",
       :type => "bridge",
-      :ip => "192.168.50.236"
+      :ip => "192.168.50.235"
+      
   config.vm.synced_folder ".", "/vagrant",
     owner: "vagrant", group: "vagrant"
+    # type: "nfs",
+    # nfs_version: 4,
+    # nfs_udp: false
 
   config.vm.provider :libvirt do |libvirt|
-    libvirt.cpus = 2
+    libvirt.cpus = 4
     libvirt.memory = 2048
     libvirt.nested = true
   end
 
   config.vm.provision :ansible do |ansible|
-    ansible.verbose = "v"
+    ansible.verbose = "vv"
 #    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python2" }
     ansible.playbook = "../ansible/playbook.yml"
 

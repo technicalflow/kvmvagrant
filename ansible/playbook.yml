@@ -7,9 +7,6 @@
   - PackageInstall
   - Usersconfig
 #  - RestartMachines
-- hosts: debian11awx
+- hosts: debian12
   roles:
   - Hardening
-# - hosts: dm, dw1, dw2
-#  roles:
-#  - DockerInstall

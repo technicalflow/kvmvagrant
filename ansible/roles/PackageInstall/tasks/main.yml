@@ -1,7 +1,7 @@
 ---
 # - hosts: centos
 #   tasks:
-   - name: install packages on Ubuntu
+   - name: install packages on Ubuntu or Debian
      apt: 
        pkg: ['mc', 'htop', 'curl', 'wget']
      become: yes
@@ -17,5 +17,10 @@
      dnf:
        pkg: ['mc', 'curl', 'htop', 'nano', 'wget']
      become: yes
-     when: ansible_distribution == "OracleLinux" 
-     
+     when: ansible_distribution == "OracleLinux" or ansible_distribution == "RedHat"
+
+   - name: Install Packages on OpenSuse or SLES
+     zypper:
+       pkg: ['curl', 'htop', 'nano', 'git']
+     become: yes
+     when: ansible_distribution == "SLES" or ansible_distribution_file_variety == "SUSE"
