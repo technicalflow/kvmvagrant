@@ -15,8 +15,10 @@ sudo apt-get install -y \
     make \
     curl \
 
+if [ $(systemd-detect-virt) == "kvm" ] ; then sudo apt install -y qemu-guest-agent; fi
+
 # Turn swap off
-# sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
 sudo swapoff -a
 sudo systemctl stop swap.target

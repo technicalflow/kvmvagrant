@@ -13,11 +13,11 @@
      become: yes
      when: ansible_distribution == "CentOS"
 
-   - name: Install Packages on Oracle
+   - name: Install Packages on Oracle or RedHat or Alma Linux
      dnf:
        pkg: ['mc', 'curl', 'htop', 'nano', 'wget']
      become: yes
-     when: ansible_distribution == "OracleLinux" or ansible_distribution == "RedHat"
+     when: ansible_distribution == "OracleLinux" or ansible_distribution == "RedHat" or ansible_distribution == "AlmaLinux"
 
    - name: Install Packages on OpenSuse or SLES
      zypper:

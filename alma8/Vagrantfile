@@ -1,0 +1,37 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    config.vm.box = "almalinux/8.uefi"
+    config.vm.hostname = "mskalma8tt1"
+
+    #  config.vm.network :private_network, ip: "192.168.100.124"
+    #  config.vm.network :forwarded_port, guest: 80, host: 8090, host_ip: "0.0.0.0"
+
+    config.vm.network :public_network,
+      :dev => "br0",
+      :mode => "bridge",
+      :type => "bridge",
+      :ip => "192.168.50.239"
+
+    config.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
+
+    config.vm.provider :libvirt do |libvirt|
+      libvirt.cpus = 2
+      libvirt.memory = 1024
+      libvirt.nested = true
+    end
+
+    config.vm.provision :ansible do |ansible|
+      ansible.verbose = "vv"
+    #  ansible.compatibility_mode = "2.0"
+    #  ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python2" }
+      ansible.playbook = "../ansible/playbook.yml"
+
+    config.vm.provision "shell", inline: <<-SHELL
+      cat /etc/os-release
+      ip a | grep inet
+    SHELL
+
+    end
+    end
