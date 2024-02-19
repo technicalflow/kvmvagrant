@@ -1,0 +1,78 @@
+---
+  vars:
+    username: vmadmin
+
+  tasks:
+  - name: Add the user
+    ansible.builtin.user:
+      name: "{{ username }}"
+      # comment: User
+      # uid: 1001
+      # group: admin
+      state: present
+      createhome: yes
+      shell: /bin/bash
+      password: "{{ 'password' | password_hash('sha512') }}"
+
+  - name: Add the user to the groups
+    ansible.builtin.user:
+      name: "{{ username }}"
+      groups: sudo,users
+      append: yes
+
+  - name: Touch a file to add sudo entry
+    ansible.builtin.file:
+      path: /etc/sudoers.d/{{ username }}
+      state: touch
+      mode: 0440
+      owner: root
+      group: root
+
+  - name: Add sudo entry
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers.d/{{ username }}
+      line: "{{ item.line }}"
+    with_items:
+        - { line: '{{ username }} ALL=(ALL) NOPASSWD: ALL' }
+
+  - name: Create ssh directory
+    ansible.builtin.file:
+      path: /home/{{ username }}/.ssh
+      state: directory
+      owner: "{{ username }}"
+      group: users
+      mode: 0700
+
+  - name: Touch a file for authorized keys
+    ansible.builtin.file:
+      path: /home/{{ username }}/.ssh/authorized_keys
+      state: touch
+      mode: 0600
+      owner: "{{ username }}"
+      group: users
+
+  - name: Insert sshkey and validate it
+    ansible.builtin.blockinfile:
+      block: "{{ lookup('file', '../files/ansible.pub') }}"
+      dest: /home/{{ username }}/.ssh/authorized_keys
+      backup: no
+      insertafter: EOF
+
+# Generate password for a user
+# - name: Generate password for new user
+#   shell: makepasswd --chars=20
+#   register: user_password
+
+# - name: Generate encrypted password
+#   shell: mkpasswd --method=SHA-512 {{ user_password.stdout }}
+#   register: encrypted_user_password
+
+# - name: Create user account
+#   user: name={{ new_user_name }}
+#         password={{ encrypted_user_password.stdout }}
+#         state=present
+#         append=yes
+#         shell="/bin/bash"
+#         update_password=always
+#   when: new_user_name is defined and new_user_name in uids
+#   register: user_created
