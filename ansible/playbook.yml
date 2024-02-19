@@ -1,5 +1,8 @@
 ---
 - hosts: all
+  vars:
+      username: vmadmin
+
   roles:
   - Update
   - EpelRelease
@@ -7,8 +10,6 @@
 #  - CopyConfig
   - Usersconfig
   - CreateUser
-    vars:
-      username: vmadmin
 #  - RestartMachines
 - hosts: debian12
   roles:

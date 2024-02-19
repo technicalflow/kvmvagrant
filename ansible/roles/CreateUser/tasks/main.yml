@@ -1,15 +1,13 @@
 ---
-  vars:
-    username: vmadmin
-
-  tasks:
   - name: Add the user
+    become: yes
     ansible.builtin.user:
       name: "{{ username }}"
       # comment: User
       # uid: 1001
       # group: admin
       state: present
+
       createhome: yes
       shell: /bin/bash
       password: "{{ 'password' | password_hash('sha512') }}"
@@ -19,6 +17,7 @@
       name: "{{ username }}"
       groups: sudo,users
       append: yes
+    become: yes
 
   - name: Touch a file to add sudo entry
     ansible.builtin.file:
@@ -27,8 +26,10 @@
       mode: 0440
       owner: root
       group: root
+    become: yes
 
   - name: Add sudo entry
+    become: yes
     ansible.builtin.lineinfile:
       path: /etc/sudoers.d/{{ username }}
       line: "{{ item.line }}"
@@ -42,6 +43,7 @@
       owner: "{{ username }}"
       group: users
       mode: 0700
+    become: yes
 
   - name: Touch a file for authorized keys
     ansible.builtin.file:
@@ -50,13 +52,15 @@
       mode: 0600
       owner: "{{ username }}"
       group: users
+    become: yes
 
-  - name: Insert sshkey and validate it
+  - name: Insert sshkey
     ansible.builtin.blockinfile:
-      block: "{{ lookup('file', '../files/ansible.pub') }}"
+      block: "{{ lookup('file', '../../CopyConfig/files/ansible.pub') }}"
       dest: /home/{{ username }}/.ssh/authorized_keys
       backup: no
       insertafter: EOF
+    become: yes
 
 # Generate password for a user
 # - name: Generate password for new user

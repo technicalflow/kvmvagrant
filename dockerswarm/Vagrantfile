@@ -119,7 +119,7 @@ instances.each do |instance|
      end
 
     #  i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-    #  i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
+    #  i.vm.provision "file", source: "../ansible/roles/CopyConfig/files/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
     #  i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
 
      i.vm.provision :ansible do |ansible|
