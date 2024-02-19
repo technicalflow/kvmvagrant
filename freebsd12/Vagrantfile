@@ -15,7 +15,7 @@ Vagrant.configure("2") do |config|
       :dev => "br0",
       :mode => "bridge",
       :type => "bridge",
-      :ip => "192.168.50.225"
+      :ip => "192.168.50.233"
   config.vm.synced_folder ".", "/vagrant",
     owner: "vagrant", group: "vagrant"
 
