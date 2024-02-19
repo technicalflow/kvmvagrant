@@ -5,9 +5,8 @@
       name: "{{ username }}"
       # comment: User
       # uid: 1001
-      # group: admin
+      group: users
       state: present
-
       createhome: yes
       shell: /bin/bash
       password: "{{ 'password' | password_hash('sha512') }}"
@@ -15,9 +14,10 @@
   - name: Add the user to the groups
     ansible.builtin.user:
       name: "{{ username }}"
-      groups: sudo,users
+      groups: sudo
       append: yes
     become: yes
+    when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
 
   - name: Touch a file to add sudo entry
     ansible.builtin.file:
