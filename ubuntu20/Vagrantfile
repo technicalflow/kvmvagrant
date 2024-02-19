@@ -36,6 +36,9 @@ Vagrant.configure("2") do |config|
 #  end
 
   config.vm.provision "shell", inline: <<-SHELL
+    sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+    swapoff -a
+    systemctl stop swap.target && systemctl disable swap.target
     cat /etc/os-release
     ip a | grep inet
   SHELL

@@ -22,7 +22,13 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
+    timedatectl set-timezone Europe/Warsaw
+    echo LANG=en_US.utf-8 >> /etc/environment
+    echo LC_ALL=en_US.utf-8 >> /etc/environment
+#    sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
     yum update -y
+    yum install gcc make perl kernel-devel -y
+    yum install epel-release -y
 #    yum install -y httpd
 #    systemctl enable --now httpd.service
     cat /etc/os-release

@@ -20,8 +20,8 @@ Vagrant.configure("2") do |config|
       libvirt.cpus = 2
       libvirt.memory = 1024
       libvirt.nested = true
-      libvirt.driver = 'kvm'
-      libvirt.cpu_mode = 'host-passthrough'
+      # libvirt.driver = 'kvm'
+      # libvirt.cpu_mode = 'host-passthrough'
       # libvirt.disk_bus = 'virtio'
       # libvirt.disk_driver :cache => 'writeback'
       # libvirt.machine_type = "q35"
