@@ -59,7 +59,7 @@ kubectl create -f /vagrant/calico.yaml
 # kubectl apply -f /vagrant/deployment.yaml
 
 # # Install Helm
-# curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
+# curl -fsSL -o get_helm.sh  https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
 # chmod 700 get_helm.sh
 # ./get_helm.sh
 
@@ -69,7 +69,5 @@ kubectl create -f /vagrant/calico.yaml
 # helm install nginx-ingress stable/nginx-ingress
 
 # # Install MetalLB
-# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
-# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
-# kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey
-# curl https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml > /vagrant/metallb.yaml
+# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+# kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
