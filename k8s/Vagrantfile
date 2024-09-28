@@ -6,7 +6,7 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 # Change to true if you want to have Docker Swarm ready to work.
-auto = ENV['AUTO_START_SWARM'] || true
+auto = ENV['AUTO_START_K8S'] || true
 # Increase numworkers if you want more than 3 nodes
 numworkers = 2
 
@@ -92,7 +92,7 @@ Vagrant.configure("2") do |config|
 
     if auto
        i.vm.provision "shell", path: "./provisionk8smaster.sh", run: "once"
-     end
+    end
 end
 end
 
@@ -132,7 +132,7 @@ instances.each do |instance|
     if auto
       i.vm.provision "shell", path: "./provisionk8snodes.sh", run: "once"
       i.vm.provision "shell", inline: "kubeadm join #{manager_ip}:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash)"
-   end
+    end
 end
 end
 end
