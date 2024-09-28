@@ -18,7 +18,7 @@ kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.
 
 mkdir -p /home/vagrant/.kube
 cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
-chown $(id -u):$(id -g) /home/vagrant/.kube/config
+chown vagrant:vagrant /home/vagrant/.kube/config
 
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' > /vagrant/ca_cert_hash
 kubeadm token list -o yaml | grep token: | awk '{print $2}' > /vagrant/kubeadm_join
@@ -33,6 +33,7 @@ curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/cu
 sed -i 's|cidr:.*|cidr: 172.20.0.0/16|g' /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
 
+#Sample Deployment
 # cat << EOFnginx > /vagrant/deployment.yaml
 # ---
 # apiVersion: apps/v1
@@ -57,24 +58,18 @@ kubectl create -f /vagrant/calico.yaml
 # EOFnginx
 # kubectl apply -f /vagrant/deployment.yaml
 
-# kubectl get services
-# kubectl get namespaces
-# kubectl get ns
-# kubectl get pods -o wide
-# kubectl expose deployment nginx-deployment --type=LoadBalancer --port=8080
-# kubectl describe service nginx-deployment
-# kubectl patch svc nginx-deployment -n default -p '{"spec": {"type": "LoadBalancer", "externalIPs":["192.168.50.238"]}}'
-# kubectl get pods -A
+# # Install Helm
+# curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
+# chmod 700 get_helm.sh
+# ./get_helm.sh
 
-# kubectl expose deployment nginx-deployment --type=LoadBalancer --port=8080
+# # Install Helm Chart
+# helm repo add stable https://charts.helm.sh/stable
+# helm repo update
+# helm install nginx-ingress stable/nginx-ingress
 
-# kubectl expose deployment nginx-deployment --type=LoadBalancer --port=8080 --target-port=80
-# kubectl delete service nginx-deployment
-# kubectl expose deployment nginx-deployment --port=8080 --target-port=80
-# kubectl get services
-# kubectl get rp,svc
-# while true; do curl 192.168.50.238/ip/ ; done
-
-# Nodes setup
-# kubeadm join 192.168.63.2:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash)
-
+# # Install MetalLB
+# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
+# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
+# kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey
+# curl https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml > /vagrant/metallb.yaml
