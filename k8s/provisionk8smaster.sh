@@ -1,12 +1,15 @@
 #!/bin/bash
 
-set -x
+set -e
+
+INSTALLHELM=true
+INSTALLMETALLB=true
 
 mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
 
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-apt update && apt install -y kubelet kubeadm kubectl containerd socat
+apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
 
 mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
 containerd config default > /etc/containerd/config.toml
@@ -33,24 +36,29 @@ kubeadm token list -o yaml | grep token: | awk '{print $2}' > /vagrant/kubeadm_j
 # Install Calico
 curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
 kubectl create -f /vagrant/tigera.yaml
+sleep 5
 curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
 # Insert pod network CIDR in calico.yaml
 sed -i 's|cidr:.*|cidr: 172.20.0.0/16|g' /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
 
 # # Install MetalLB
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
-# kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+if $INSTALLMETALLB == true; then
+    curl -fs https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml > /vagrant/metallb.yaml
+    kubectl apply -f /vagrant/metallb.yaml
+    # kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+fi
 
 # # Install Helm
-curl -fsSL -o /vagrant/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
-chmod 700 /vagrant/get_helm.sh
-sh /vagrant/get_helm.sh
-
-# # Install Helm Chart
-helm repo add stable https://charts.helm.sh/stable
-helm repo update
-# helm install nginx-ingress stable/nginx-ingress
+if $INSTALLHELM == true; then
+    curl -fsSL -o /vagrant/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
+    chmod 700 /vagrant/get_helm.sh
+    /vagrant/get_helm.sh
+    # # Install Helm Chart
+    helm repo add stable https://charts.helm.sh/stable
+    helm repo update
+    # helm install nginx-ingress stable/nginx-ingress
+fi
 
 rm -rf /root/.kube
 
