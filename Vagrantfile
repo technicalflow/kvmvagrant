@@ -22,6 +22,15 @@ Vagrant.configure("2") do |config|
         i.vm.box = "hashicorp/bionic64"
         i.vm.hostname = "manager"
         i.vm.network "private_network", ip: "192.168.10.2"
+
+        # i.vm.network :private_network,
+        #   :ip => '192.168.122.15',
+        #   :libvirt__netmask => '255.255.255.0',
+        #   :libvirt__network_name => 'default',
+        #   :libvirt__forward_mode => 'none'
+        # i.vm.network :private_network,
+        #   :type => "dhcp"
+        
         i.vm.provision "shell", path: "./provision-manager.sh"
     end
 
