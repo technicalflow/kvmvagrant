@@ -68,4 +68,4 @@ echo DONE
 # if [ $(hostname) == "k8smaster" ] ; then mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml && netplan apply; fi
 
 # For Debian12 to communicate from LAN network with VM
-if [ $(hostname) == "k8smaster" ] ; then sed -i '/      address 192.168.50.238/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces; fi
+if [ $(hostname) == "k8smaster" ] ; then sed -i '/      address 192.168.50.238/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
