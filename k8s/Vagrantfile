@@ -51,7 +51,7 @@ Vagrant.configure("2") do |config|
         libvirt.nested = true
           # libvirt.name = "#{manager_hostname}"
       end
-        i.vm.box = "roboxes-x64/ubuntu1804"
+        i.vm.box = "roboxes-x64/debian12"
         i.vm.hostname = "#{manager_hostname}"
 
         i.vm.network :public_network,
@@ -61,7 +61,7 @@ Vagrant.configure("2") do |config|
             :ip => "192.168.50.238"
 
         i.vm.network :private_network, :ip => "#{manager_ip}"
-        i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
+        i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
 #          type: "nfs",
 #          nfs_version: 4,
 #          nfs_udp: false
@@ -104,11 +104,11 @@ instances.each do |instance|
          lv.nested = true
          # lv.name = "#{instance[:name]}"
      end
-     i.vm.box = "roboxes-x64/ubuntu1804"
+     i.vm.box = "roboxes-x64/debian12"
      i.vm.hostname = instance[:name]
      i.vm.network :private_network, ip: "#{instance[:ip]}"
 
-     i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
+     i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
 
      if File.file?("./hosts")
        i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
@@ -127,7 +127,7 @@ instances.each do |instance|
 
      i.vm.provision "shell", path: "./provision.sh", run: "once"
     # If you forgot about vagrant up --no-parallel
-     i.vm.provision "shell", inline: "sleep 20"
+     i.vm.provision "shell", inline: "sleep 10"
 
     if auto
       i.vm.provision "shell", path: "./provisionk8snodes.sh", run: "once"

@@ -45,24 +45,27 @@ EOF
 ip a | grep inet
 echo DONE
 
-# Only if communicating from LAN network with VM
-cat << EOFroute > /vagrant/50-vagrant.yaml
----
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    eth1:
-      addresses:
-      - 192.168.50.238/24
-      routes:
-      - to: 0.0.0.0/0
-        via: 192.168.50.250
-        metric: 10
-        on-link: true
-    eth2:
-      addresses:
-      - 192.168.63.2/24
-EOFroute
+# Only if communicating from LAN network with VM on Ubuntu 18.04
+# cat << EOFroute > /vagrant/50-vagrant.yaml
+# ---
+# network:
+#   version: 2
+#   renderer: networkd
+#   ethernets:
+#     eth1:
+#       addresses:
+#       - 192.168.50.238/24
+#       routes:
+#       - to: 0.0.0.0/0
+#         via: 192.168.50.250
+#         metric: 10
+#         on-link: true
+#     eth2:
+#       addresses:
+#       - 192.168.63.2/24
+# EOFroute
 
-if [ $(hostname) == "k8smaster" ] ; then mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml && netplan apply; fi
+# if [ $(hostname) == "k8smaster" ] ; then mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml && netplan apply; fi
+
+# For Debian12 to communicate from LAN network with VM
+if [ $(hostname) == "k8smaster" ] ; then sed -i '/      address 192.168.50.238/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces; fi
