@@ -4,6 +4,8 @@ set -e
 
 INSTALLHELM=true
 INSTALLMETALLB=true
+INSTALLMETRICS=true
+SAMPLEDEPLOY=false
 
 mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
@@ -49,6 +51,13 @@ if $INSTALLMETALLB == true; then
     # kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 fi
 
+# Install Metrics Server
+if $INSTALLMETRICS == true; then
+    wget -q -O /vagrant/components.yaml https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    sed -i 's| - --secure-port=10250| - --secure-port=10250\n        - --kubelet-insecure-tls|' /vagrant/components.yaml
+    kubectl apply -f /vagrant/components.yaml
+fi
+
 # # Install Helm
 if $INSTALLHELM == true; then
     curl -fsSL -o /vagrant/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
@@ -62,27 +71,49 @@ fi
 
 rm -rf /root/.kube
 
-#Sample Deployment
-# cat << EOFnginx > /vagrant/deployment.yaml
-# ---
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: nginx-deployment
-# spec:
-#   selector:
-#     matchLabels:
-#       app: nginx
-#   replicas: 20 # Update the replicas from 2 to 20
-#   template:
-#     metadata:
-#       labels:
-#         app: nginx
-#     spec:
-#       containers:
-#       - name: nginx
-#         image: techfellow/webappa:latest
-#         ports:
-#         - containerPort: 80
-# EOFnginx
-# kubectl apply -f /vagrant/deployment.yaml
+# Sample Deployment
+if [[ "$SAMPLEDEPLOY" == true && "$INSTALLMETALLB" == true ]]; then
+cat << EOFnginx > /vagrant/deployment.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 20 # Update the replicas from 2 to 20
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: techfellow/webappa:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-lb
+spec:
+  type: LoadBalancer 
+  externalIPs:
+    - 192.168.50.238
+  selector:
+    app: nginx
+  ports:
+    - name: http
+      protocol: TCP
+      port:80
+      targetPort:80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+EOFnginx
+kubectl apply -f /vagrant/deployment.yaml
+fi
