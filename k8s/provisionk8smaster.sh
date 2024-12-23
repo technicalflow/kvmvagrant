@@ -5,7 +5,9 @@ set -e
 INSTALLHELM=true
 INSTALLMETALLB=true
 INSTALLMETRICS=true
-SAMPLEDEPLOY=false
+INSTALLINGRESS=true
+SAMPLEDEPLOY=true
+SAMPLEWEBAPP=true
 
 mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
@@ -71,49 +73,31 @@ fi
 
 rm -rf /root/.kube
 
+if [[ "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm template ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version 4.11.3 --namespace ingress-nginx > ingress.yaml
+    sed -i 's|  type: LoadBalancer|  type: LoadBalancer\n  externalIPs:\n    - 192.168.50.238|' ingress.yaml
+    kubectl create ns ingress-nginx
+    kubectl apply -f ingress.yaml --namespace ingress-nginx
+fi
+
+# Sample with Ingress Configuration
+if [[ "$SAMPLEWEBAPP" == true && "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true]]; then
+    kubectl apply -f /vagrant/samplewebappingress.yaml
+fi
+
 # Sample Deployment
 if [[ "$SAMPLEDEPLOY" == true && "$INSTALLMETALLB" == true ]]; then
-cat << EOFnginx > /vagrant/deployment.yaml
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-spec:
-  selector:
-    matchLabels:
-      app: nginx
-  replicas: 20 # Update the replicas from 2 to 20
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: techfellow/webappa:latest
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-lb
-spec:
-  type: LoadBalancer 
-  externalIPs:
-    - 192.168.50.238
-  selector:
-    app: nginx
-  ports:
-    - name: http
-      protocol: TCP
-      port:80
-      targetPort:80
-    - name: https
-      protocol: TCP
-      port: 443
-      targetPort: 443
-EOFnginx
-kubectl apply -f /vagrant/deployment.yaml
+    kubectl apply -f /vagrant/samplenginx.yaml
 fi
+
+# Dashboard
+# helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+# helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+# To access Dashboard run:
+#   kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard-kong-proxy 8443:443
+#   kubectl expose service kubernetes-dashboard-kong-proxy --port=443 --target-port=8443 --name=kubedashboard -n kubernetes-dashboard
+
+# curl -LO https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+# kubectl create ns cert-manager
+# kubectl apply -f cert-manager.yaml --namespace cert-manager
