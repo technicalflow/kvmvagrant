@@ -49,26 +49,26 @@ Vagrant.configure("2") do |config|
         libvirt.name = "#{manager_hostname}"
         libvirt.cpu_mode = "host-passthrough"
       end
-        i.vm.box = "roboxes-x64/ubuntu1804"
-        i.vm.hostname = "#{manager_hostname}"
+      i.vm.box = "roboxes-x64/ubuntu1804"
+      i.vm.hostname = "#{manager_hostname}"
 
-        i.vm.network :public_network,
-            :dev => "br0",
-            :mode => "bridge",
-            :type => "bridge",
-            :ip => "192.168.50.232",
-            :autostart => "true"
+      i.vm.network :public_network,
+        :dev => "br0",
+        :mode => "bridge",
+        :type => "bridge",
+        :ip => "192.168.50.232",
+        :autostart => "true"
 
-        i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
-        i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
+      i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
+      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
 #          type: "nfs",
 #          nfs_version: 4,
 #          nfs_udp: false
-  
-        if File.file?("./hosts")
-          i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
-          i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
-        end
+
+      if File.file?("./hosts")
+        i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
+        i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+      end
 
 #      i.vm.provision "file", source: "~/.ssh/id.rsa.pub", destination: "~/.ssh/me.pub"
 #      i.vm.provision "shell", inline: <<-SHELL
@@ -86,6 +86,7 @@ Vagrant.configure("2") do |config|
         ansible.compatibility_mode = "2.0"
     #    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
         ansible.playbook = "../ansible/playbook.yml"
+      end
 
       i.vm.provision "shell", path: "./provisionfull.sh", run: "once"
       i.vm.provision "shell", path: "./provisiondockerlink.sh", run: "once"
@@ -95,47 +96,46 @@ Vagrant.configure("2") do |config|
         i.vm.provision "shell", inline: "docker swarm join-token -q worker > /vagrant/token"
       end
 end
-end
 
 instances.each do |instance|
     config.vm.define instance[:name] do |i|
-     i.vm.provider :libvirt do |lv|
-         lv.cpus = 4
-         lv.memory = 1024
-         lv.nested = true
-         lv.cpu_mode = "host-passthrough"
-     end
-     i.vm.box = "roboxes-x64/ubuntu1804"
-     i.vm.hostname = instance[:name]
-     i.vm.network :private_network, ip: "#{instance[:ip]}"
+      i.vm.provider :libvirt do |lv|
+          lv.cpus = 4
+          lv.memory = 1024
+          lv.nested = true
+          lv.cpu_mode = "host-passthrough"
+      end
+      i.vm.box = "roboxes-x64/ubuntu1804"
+      i.vm.hostname = instance[:name]
+      i.vm.network :private_network, ip: "#{instance[:ip]}"
+ 
+      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
+ 
+      if File.file?("./hosts")
+        i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
+        i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+      end
+ 
+     #  i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
+     #  i.vm.provision "file", source: "../ansible/roles/CopyConfig/files/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
+     #  i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
+ 
+      i.vm.provision :ansible do |ansible|
+        ansible.verbose = "v"
+        ansible.compatibility_mode = "2.0"
+     #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
+        ansible.playbook = "../ansible/playbook.yml"
+      end
 
-     i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
-
-     if File.file?("./hosts")
-       i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
-       i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
-     end
-
-    #  i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-    #  i.vm.provision "file", source: "../ansible/roles/CopyConfig/files/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
-    #  i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
-
-     i.vm.provision :ansible do |ansible|
-       ansible.verbose = "v"
-       ansible.compatibility_mode = "2.0"
-    #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
-       ansible.playbook = "../ansible/playbook.yml"
-
-     i.vm.provision "shell", path: "./provisionfull.sh"
-
-    # If you forgot about vagrant up --no-parallel
-     i.vm.provision "shell", inline: "sleep 10"
-     i.vm.provision "shell", path: "./provisiondockerlink.sh"
-
-     if auto
-       i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
-    end
-end
+      i.vm.provision "shell", path: "./provisionfull.sh"
+ 
+     # If you forgot about vagrant up --no-parallel
+      i.vm.provision "shell", inline: "sleep 10"
+      i.vm.provision "shell", path: "./provisiondockerlink.sh"
+ 
+      if auto
+        i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
+      end
 end
 end
 end

@@ -6,16 +6,16 @@ export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-sudo timedatectl set-timezone Europe/Warsaw
+timedatectl set-timezone Europe/Warsaw
 
 # Install recommended extra packages
-sudo apt-get update
-sudo apt-get -y upgrade
-#sudo apt-get install -y \
+apt-get update
+apt-get -y upgrade
+#apt-get install -y \
 #    linux-image-virtual \
 #    linux-image-extra-virtual
 
-sudo apt-get install -y \
+apt-get install -y \
     gcc \
     make \
     perl \
@@ -25,14 +25,14 @@ sudo apt-get install -y \
     ca-certificates \
     apt-transport-https
 
-if [ $(systemd-detect-virt) == "kvm" ] ; then sudo apt-get install -y qemu-guest-agent; fi
+if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
 
-sudo apt-get autoremove
-sudo apt-get purge
-sudo apt-get clean
+apt-get autoremove
+apt-get purge
+apt-get clean
 
-# sudo apt-get remove virtualbox-guest-utils -y
-# sudo sh /vagrant/VBoxLinuxAdditions.run
+# apt-get remove virtualbox-guest-utils -y
+# sh /vagrant/VBoxLinuxAdditions.run
 
 ip a | grep inet
 echo DONE
@@ -57,5 +57,5 @@ network:
       - 192.168.60.2/24
 EOFroute
 
-if [ $(hostname) == "dsm" ] ; then sudo mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml; fi
+if [ $(hostname) == "dsm" ] ; then mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml; fi
 netplan apply

@@ -43,10 +43,9 @@ File.open("./hosts", 'w') { |file|
 Vagrant.configure("2") do |config|
     config.vm.define "k8smaster" do |i|
       i.vm.provider :libvirt do |libvirt|
-        libvirt.cpus = ${numcpu}
-        libvirt.memory = ${vmmemory}
+        libvirt.cpus = "#{numcpu}"
+        libvirt.memory = "#{vmmemory}"
         libvirt.nested = true
-        libvirt.name = "#{manager_hostname}"
         libvirt.driver = "kvm"
         libvirt.cpu_mode = "host-passthrough"
         libvirt.disk_bus = "virtio"
@@ -54,25 +53,25 @@ Vagrant.configure("2") do |config|
         libvirt.machine_type = "q35"
         libvirt.nic_model_type = "virtio"
       end
-        i.vm.box = "roboxes-x64/debian12"
-        i.vm.hostname = "#{manager_hostname}"
+      i.vm.box = "roboxes-x64/debian12"
+      i.vm.hostname = "#{manager_hostname}"
 
-        i.vm.network :public_network,
-            :dev => "br0",
-            :mode => "bridge",
-            :type => "bridge",
-            :ip => "192.168.50.238",
-            :autostart => "true"
+      i.vm.network :public_network,
+        :dev => "br0",
+        :mode => "bridge",
+        :type => "bridge",
+        :ip => "192.168.50.238",
+        :autostart => "true"
 
-        i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
-        i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
+      i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
+      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
 #          type: "nfs",
 #          nfs_version: 4,
 #          nfs_udp: false
-        if File.file?("./hosts")
-          i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
-          i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
-        end
+      if File.file?("./hosts")
+        i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
+        i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+      end
 
       i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
       i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
@@ -83,55 +82,55 @@ Vagrant.configure("2") do |config|
         ansible.compatibility_mode = "2.0"
     #    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
         ansible.playbook = "../ansible/playbook.yml"
+      end
 
       i.vm.provision "shell", path: "./provision.sh", run: "once"
 
-    if auto
-       i.vm.provision "shell", path: "./provisionk8smaster.sh", run: "once"
-    end
-end
+      if auto
+        i.vm.provision "shell", path: "./provisionk8smaster.sh", run: "once"
+      end
 end
 
 instances.each do |instance|
     config.vm.define instance[:name] do |i|
-     i.vm.provider :libvirt do |lv|
-         lv.cpus = 4
-         lv.memory = 2048
-         lv.nested = true
-         lv.driver = "kvm"
-         lv.cpu_mode = "host-passthrough"
-         lv.disk_bus = "virtio"
-         lv.disk_driver :cache => "writeback"
-         lv.machine_type = "q35"
-         lv.nic_model_type = "virtio"
-     end
-     i.vm.box = "roboxes-x64/debian12"
-     i.vm.hostname = instance[:name]
-     i.vm.network :private_network, ip: "#{instance[:ip]}"
+      i.vm.provider :libvirt do |lv|
+          lv.cpus = 4
+          lv.memory = 2048
+          lv.nested = true
+          lv.driver = "kvm"
+          lv.cpu_mode = "host-passthrough"
+          lv.disk_bus = "virtio"
+          lv.disk_driver :cache => "writeback"
+          lv.machine_type = "q35"
+          lv.nic_model_type = "virtio"
+      end
+      i.vm.box = "roboxes-x64/debian12"
+      i.vm.hostname = instance[:name]
+      i.vm.network :private_network, ip: "#{instance[:ip]}"
+ 
+      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
+ 
+      if File.file?("./hosts")
+        i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
+        i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+      end
+ 
+      i.vm.provision :ansible do |ansible|
+        ansible.verbose = "vv"
+        ansible.compatibility_mode = "2.0"
+     #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
+        ansible.playbook = "../ansible/playbook.yml"
+      end
 
-     i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
+      i.vm.provision "shell", path: "./provision.sh", run: "once"
 
-     if File.file?("./hosts")
-       i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
-       i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
-     end
-
-     i.vm.provision :ansible do |ansible|
-       ansible.verbose = "vv"
-       ansible.compatibility_mode = "2.0"
-    #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
-       ansible.playbook = "../ansible/playbook.yml"
-
-     i.vm.provision "shell", path: "./provision.sh", run: "once"
-
-    # If you forgot about vagrant up --no-parallel
-     i.vm.provision "shell", inline: "sleep 10"
-
-    if auto
-      i.vm.provision "shell", path: "./provisionk8snodes.sh", run: "once"
-      i.vm.provision "shell", inline: "kubeadm join #{manager_ip}:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash)"
-    end
-end
+     # If you forgot about vagrant up --no-parallel
+      i.vm.provision "shell", inline: "sleep 10"
+ 
+      if auto
+        i.vm.provision "shell", path: "./provisionk8snodes.sh", run: "once"
+        i.vm.provision "shell", inline: "kubeadm join #{manager_ip}:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash)"
+      end
 end
 end
 end
