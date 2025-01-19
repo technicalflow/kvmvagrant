@@ -25,7 +25,7 @@ sudo apt-get install -y \
     ca-certificates \
     apt-transport-https
 
-if [ $(systemd-detect-virt) == "kvm" ] ; then sudo apt install -y qemu-guest-agent; fi
+if [ $(systemd-detect-virt) == "kvm" ] ; then sudo apt-get install -y qemu-guest-agent; fi
 
 sudo apt-get autoremove
 sudo apt-get purge

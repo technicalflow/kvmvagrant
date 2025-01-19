@@ -1,19 +1,13 @@
-# -*- mode: ruby -*-/Users/marek/.vagrant.d/Vagrantfile
+# -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
 # Change to true if you want to have Docker Swarm ready to work.
 auto = ENV['AUTO_START_SWARM'] || true
 # Increase numworkers if you want more than 3 nodes
 numworkers = 2
 
-# VirtualBox settings
-# Increase vmmemory if you want more than 512mb memory in the vm's
-# Increase numcpu if you want more cpu's per vm
-vmmemory = 1024
+# Master memory and CPU configuration
+vmmemory = 2048
 numcpu = 4
 
 instances = []
@@ -22,6 +16,7 @@ instances = []
   instances.push({:name => "dsw#{n}", :ip => "192.168.60.#{n+2}"})
 end
 
+# Manager IP and hostname
 manager_ip = "192.168.60.2"
 manager_hostname = "dsm"
 
@@ -32,6 +27,7 @@ File.open("./hosts", 'w') { |file|
   end
   }
 
+# Old Proxy configuration
 # http_proxy = ""
 # Proxy configuration
 # if ENV['http_proxy']
@@ -47,10 +43,11 @@ File.open("./hosts", 'w') { |file|
 Vagrant.configure("2") do |config|
     config.vm.define "dsm" do |i|
       i.vm.provider :libvirt do |libvirt|
-        libvirt.cpus = 4
-        libvirt.memory = 2048
+        libvirt.cpus = "#{numcpu}"
+        libvirt.memory = "#{vmmemory}"
         libvirt.nested = true
-          # libvirt.name = "#{manager_hostname}"
+        libvirt.name = "#{manager_hostname}"
+        libvirt.cpu_mode = "host-passthrough"
       end
         i.vm.box = "roboxes-x64/ubuntu1804"
         i.vm.hostname = "#{manager_hostname}"
@@ -59,9 +56,10 @@ Vagrant.configure("2") do |config|
             :dev => "br0",
             :mode => "bridge",
             :type => "bridge",
-            :ip => "192.168.50.232"
+            :ip => "192.168.50.232",
+            :autostart => "true"
 
-        i.vm.network :private_network, :ip => "#{manager_ip}" :autostart => "true"
+        i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
         i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
 #          type: "nfs",
 #          nfs_version: 4,
@@ -105,7 +103,7 @@ instances.each do |instance|
          lv.cpus = 4
          lv.memory = 1024
          lv.nested = true
-         # lv.name = "#{instance[:name]}"
+         lv.cpu_mode = "host-passthrough"
      end
      i.vm.box = "roboxes-x64/ubuntu1804"
      i.vm.hostname = instance[:name]
@@ -131,7 +129,7 @@ instances.each do |instance|
      i.vm.provision "shell", path: "./provisionfull.sh"
 
     # If you forgot about vagrant up --no-parallel
-     i.vm.provision "shell", inline: "sleep 20"
+     i.vm.provision "shell", inline: "sleep 10"
      i.vm.provision "shell", path: "./provisiondockerlink.sh"
 
      if auto

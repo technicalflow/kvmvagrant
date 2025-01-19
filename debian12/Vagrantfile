@@ -7,21 +7,20 @@ image_name = "generic/debian12"
 Vagrant.configure("2") do |config|
   config.vm.box = "#{image_name}"
   config.vm.hostname = "#{manager_hostname}"
-
-#  config.vm.network :private_network, ip: "192.168.121.124"
-#  config.vm.network :forwarded_port, guest: 80, host: 8090, host_ip: "0.0.0.0"
-
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   config.vm.provider :libvirt do |libvirt|
-    libvirt.cpus = 2
+    libvirt.cpus = 4
     libvirt.memory = 1024
     libvirt.nested = true
+    libvirt.driver = "kvm"
+    libvirt.cpu_mode = "host-passthrough"
+    libvirt.disk_bus = "virtio"
+    libvirt.disk_driver :cache => "writeback"
+    libvirt.machine_type = "q35"
+    libvirt.nic_model_type = "virtio"
+    # libvirt.nvram = "/var/lib/libvirt/qemu/nvram/OVMF_VARS.fd"
   end
-
-#  config.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-#  config.vm.provision "file", source: "../ansible/roles/CopyConfig/files/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
-#  config.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
 
   config.vm.provision :ansible do |ansible|
     ansible.verbose = "v"
@@ -29,12 +28,18 @@ Vagrant.configure("2") do |config|
 #    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python2" }
     ansible.playbook = "../ansible/playbook.yml"
 
-  config.vm.provision "shell", path: "./provision.sh", run: "once"
-
   config.vm.provision "shell", inline: <<-SHELL
+    export DEBIAN_FRONTEND=noninteractive
+    export LANGUAGE=en_US.UTF-8
+    export LANG=en_US.UTF-8
+    export LC_ALL=en_US.UTF-8
+    if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
+    swapoff -a
+    systemctl disable --now swap.target
+    hostname
     cat /etc/os-release
     ip a | grep inet
+    echo DONE
   SHELL
 end
 end
-

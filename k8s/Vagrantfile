@@ -1,18 +1,13 @@
-# -*- mode: ruby -*-/Users/marek/.vagrant.d/Vagrantfile
+# -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
-# Change to true if you want to have Docker Swarm ready to work.
+# Change to true if you want to have Kubernetes ready to work.
 auto = ENV['AUTO_START_K8S'] || true
-# Increase numworkers if you want more than 3 nodes
+
+# Increase numworkers if you want more nodes
 numworkers = 2
 
-# VirtualBox settings
-# Increase vmmemory if you want more than 512mb memory in the vm's
-# Increase numcpu if you want more cpu's per vm
+# Master memory and CPU configuration
 vmmemory = 2048
 numcpu = 4
 
@@ -31,6 +26,8 @@ File.open("./hosts", 'w') { |file|
     file.write("#{i[:ip]} #{i[:name]} #{i[:name]}\n")
   end
   }
+
+# Old proxy configuration
 # http_proxy = ""
 # Proxy configuration
 # if ENV['http_proxy']
@@ -46,10 +43,16 @@ File.open("./hosts", 'w') { |file|
 Vagrant.configure("2") do |config|
     config.vm.define "k8smaster" do |i|
       i.vm.provider :libvirt do |libvirt|
-        libvirt.cpus = 4
-        libvirt.memory = 2048
+        libvirt.cpus = ${numcpu}
+        libvirt.memory = ${vmmemory}
         libvirt.nested = true
-          # libvirt.name = "#{manager_hostname}"
+        libvirt.name = "#{manager_hostname}"
+        libvirt.driver = "kvm"
+        libvirt.cpu_mode = "host-passthrough"
+        libvirt.disk_bus = "virtio"
+        libvirt.disk_driver :cache => "writeback"
+        libvirt.machine_type = "q35"
+        libvirt.nic_model_type = "virtio"
       end
         i.vm.box = "roboxes-x64/debian12"
         i.vm.hostname = "#{manager_hostname}"
@@ -58,9 +61,10 @@ Vagrant.configure("2") do |config|
             :dev => "br0",
             :mode => "bridge",
             :type => "bridge",
-            :ip => "192.168.50.238"
+            :ip => "192.168.50.238",
+            :autostart => "true"
 
-        i.vm.network :private_network, :ip => "#{manager_ip}"
+        i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
         i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
 #          type: "nfs",
 #          nfs_version: 4,
@@ -69,13 +73,6 @@ Vagrant.configure("2") do |config|
           i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
           i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
         end
-
-#      i.vm.provision "file", source: "~/.ssh/id.rsa.pub", destination: "~/.ssh/me.pub"
-#      i.vm.provision "shell", inline: <<-SHELL
-#         mkdir -p /home/vagrant/.ssh/
-#         touch /home/vagrant/.ssh/authorized_keys
-#         cat /home/vagrant/.ssh/me.pub >> /home/vagrant/.ssh/authorized_keys
-#      SHELL
 
       i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
       i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
@@ -88,7 +85,6 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "../ansible/playbook.yml"
 
       i.vm.provision "shell", path: "./provision.sh", run: "once"
-      # i.vm.provision "shell", path: "./provisionk8smaster.sh", run: "once"
 
     if auto
        i.vm.provision "shell", path: "./provisionk8smaster.sh", run: "once"
@@ -102,7 +98,12 @@ instances.each do |instance|
          lv.cpus = 4
          lv.memory = 2048
          lv.nested = true
-         # lv.name = "#{instance[:name]}"
+         lv.driver = "kvm"
+         lv.cpu_mode = "host-passthrough"
+         lv.disk_bus = "virtio"
+         lv.disk_driver :cache => "writeback"
+         lv.machine_type = "q35"
+         lv.nic_model_type = "virtio"
      end
      i.vm.box = "roboxes-x64/debian12"
      i.vm.hostname = instance[:name]
@@ -115,10 +116,6 @@ instances.each do |instance|
        i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
      end
 
-    #  i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-    #  i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
-    #  i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
-
      i.vm.provision :ansible do |ansible|
        ansible.verbose = "vv"
        ansible.compatibility_mode = "2.0"
@@ -126,6 +123,7 @@ instances.each do |instance|
        ansible.playbook = "../ansible/playbook.yml"
 
      i.vm.provision "shell", path: "./provision.sh", run: "once"
+
     # If you forgot about vagrant up --no-parallel
      i.vm.provision "shell", inline: "sleep 10"
 

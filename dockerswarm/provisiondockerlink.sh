@@ -1,9 +1,8 @@
 #!/bin/bash
 
-sudo curl -fsSL https://get.docker.com | sudo sh
+curl -fsSL https://get.docker.com | sh
 
 # Access docker w/o sudo
-
-sudo usermod -aG docker vagrant
-sudo service docker restart
+usermod -aG docker vagrant
+service docker restart
 docker version
