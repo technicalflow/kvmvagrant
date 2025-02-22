@@ -46,7 +46,12 @@ Vagrant.configure("2") do |config|
         libvirt.cpus = "#{numcpu}"
         libvirt.memory = "#{vmmemory}"
         libvirt.nested = true
-        libvirt.name = "#{manager_hostname}"
+        # libvirt.name = "#{manager_hostname}"
+        libvirt.driver = "kvm"
+        libvirt.disk_bus = "virtio"
+        libvirt.disk_driver :cache => "writeback"
+        libvirt.machine_type = "q35"
+        libvirt.nic_model_type = "virtio"
         libvirt.cpu_mode = "host-passthrough"
       end
       i.vm.box = "roboxes-x64/ubuntu1804"
@@ -60,10 +65,11 @@ Vagrant.configure("2") do |config|
         :autostart => "true"
 
       i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
-      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
-#          type: "nfs",
-#          nfs_version: 4,
-#          nfs_udp: false
+      i.vm.synced_folder ".", "/vagrant", 
+          # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
+         type: "nfs",  ### Enable for Ubuntu based systems
+         nfs_version: 4, ### Enable for Ubuntu based systems
+         nfs_udp: false  ### Enable for Ubuntu based systems
 
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
@@ -83,7 +89,7 @@ Vagrant.configure("2") do |config|
 
       i.vm.provision :ansible do |ansible|
         ansible.verbose = "v"
-        ansible.compatibility_mode = "2.0"
+        # ansible.compatibility_mode = "2.0"
     #    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
         ansible.playbook = "../ansible/playbook.yml"
       end
@@ -103,13 +109,22 @@ instances.each do |instance|
           lv.cpus = 4
           lv.memory = 1024
           lv.nested = true
+          lv.driver = "kvm"
+          lv.disk_bus = "virtio"
+          lv.disk_driver :cache => "writeback"
+          lv.machine_type = "q35"
+          lv.nic_model_type = "virtio"
           lv.cpu_mode = "host-passthrough"
       end
       i.vm.box = "roboxes-x64/ubuntu1804"
       i.vm.hostname = instance[:name]
       i.vm.network :private_network, ip: "#{instance[:ip]}"
  
-      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant"
+      i.vm.synced_folder ".", "/vagrant",
+          # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
+          type: "nfs",  ### Enable for Ubuntu based systems
+          nfs_version: 4, ### Enable for Ubuntu based systems
+          nfs_udp: false  ### Enable for Ubuntu based systems
  
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
@@ -122,7 +137,7 @@ instances.each do |instance|
  
       i.vm.provision :ansible do |ansible|
         ansible.verbose = "v"
-        ansible.compatibility_mode = "2.0"
+        # ansible.compatibility_mode = "2.0"
      #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
         ansible.playbook = "../ansible/playbook.yml"
       end

@@ -7,7 +7,7 @@ INSTALLMETALLB=true
 INSTALLMETRICS=true
 INSTALLINGRESS=true
 SAMPLEDEPLOY=true
-SAMPLEWEBAPP=true
+SAMPLEWEBAPP=false
 
 mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
@@ -71,14 +71,12 @@ if $INSTALLHELM == true; then
     # helm install nginx-ingress stable/nginx-ingress
 fi
 
-rm -rf /root/.kube
-
 if [[ "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-    helm template ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version 4.11.3 --namespace ingress-nginx > ingress.yaml
-    sed -i 's|  type: LoadBalancer|  type: LoadBalancer\n  externalIPs:\n    - 192.168.50.238|' ingress.yaml
+    helm template ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version 4.11.3 --namespace ingress-nginx > /vagrant/ingress.yaml
+    sed -i 's|  type: LoadBalancer|  type: LoadBalancer\n  externalIPs:\n    - 192.168.50.238|' /vagrant/ingress.yaml
     kubectl create ns ingress-nginx
-    kubectl apply -f ingress.yaml --namespace ingress-nginx
+    kubectl apply -f /vagrant/ingress.yaml --namespace ingress-nginx
 fi
 
 # Sample with Ingress Configuration
@@ -101,3 +99,5 @@ fi
 # curl -LO https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
 # kubectl create ns cert-manager
 # kubectl apply -f cert-manager.yaml --namespace cert-manager
+
+rm -rf /root/.kube

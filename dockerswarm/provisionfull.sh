@@ -9,8 +9,8 @@ export LC_ALL=en_US.UTF-8
 timedatectl set-timezone Europe/Warsaw
 
 # Install recommended extra packages
-apt-get update
-apt-get -y upgrade
+# apt-get update
+# apt-get -y upgrade
 #apt-get install -y \
 #    linux-image-virtual \
 #    linux-image-extra-virtual
