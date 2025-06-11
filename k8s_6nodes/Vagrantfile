@@ -73,10 +73,11 @@ Vagrant.configure("2") do |config|
         :autostart => "true"
 
       i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
-      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
-#          type: "nfs",
-#          nfs_version: 4,
-#          nfs_udp: false
+      i.vm.synced_folder ".", "/vagrant",
+      # owner: "vagrant", group: "vagrant", nfs_udp: false
+        type: "nfs",
+        nfs_version: 4,
+        nfs_udp: false
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
@@ -123,8 +124,11 @@ mains.each do |mains|
         :autostart => "true"
 
       m.vm.network :private_network, ip: "#{mains[:ipm]}"
- 
-      m.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
+      m.vm.synced_folder ".", "/vagrant",
+      # owner: "vagrant", group: "vagrant", nfs_udp: false
+        type: "nfs",
+        nfs_version: 4,
+        nfs_udp: false
 
       m.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
       m.vm.provision "file", source: "/home/madmin/kvmvagrant/ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
@@ -170,9 +174,13 @@ instances.each do |instances|
       end
       i.vm.box = "roboxes-x64/debian12"
       i.vm.hostname = instances[:name]
+      
       i.vm.network :private_network, ip: "#{instances[:ip]}"
-
-      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
+      i.vm.synced_folder ".", "/vagrant",
+      # owner: "vagrant", group: "vagrant", nfs_udp: false
+        type: "nfs",
+        nfs_version: 4,
+        nfs_udp: false
  
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
