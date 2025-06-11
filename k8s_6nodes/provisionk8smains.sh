@@ -27,7 +27,7 @@ kubeadm config images pull
 # kubeadm init phase upload-certs --upload-certs --config /vagrant/kubeadm-config.yaml
 
 # Generate Certificate for control plane
-# kubeadm init phase upload-certs --upload-certs 2>/dev/null | tee /vagrant/cert100 &> /dev/null && tail -1 /vagrant/cert_key2
+# kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key3
 # kubeadm certs certificate-key > /vagrant/cert_key
 
 # kubeadm token create --print-join-command

@@ -153,8 +153,8 @@ mains.each do |mains|
  
       if auto
         m.vm.provision "shell", path: "./provisionk8smains.sh", run: "once"
-        m.vm.provision "shell", inline: "kubeadm join #{manager_ip}:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash) --control-plane --certificate-key $(cat /vagrant/cert_key)"
-        m.vm.provision "shell", inline: ""
+        m.vm.provision "shell", inline: "kubeadm join #{manager_ip}:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash) --control-plane --certificate-key $(cat /vagrant/cert_key3)"
+        m.vm.provision "shell", inline: "export KUBECONFIG=/etc/kubernetes/admin.conf && chmod 755 /etc/kubernetes/admin.conf && kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key3"
       end
 end
 end

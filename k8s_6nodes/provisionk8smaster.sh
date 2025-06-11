@@ -38,7 +38,8 @@ kubeadm token list -o yaml | grep token: | awk '{print $2}' > /vagrant/kubeadm_j
 # kubectl -n kube-system get cm kubeadm-config -o json |jq -r '.data.ClusterConfiguration' > /vagrant/kubeadm-config.yaml
 # sed -i '/clusterName: kubernetes/a\controlPlaneEndpoint: k8sm1:6443' /vagrant/kubeadm-config.yaml
 # kubeadm init phase upload-certs --upload-certs --config /vagrant/kubeadm-config.yaml
-kubeadm certs certificate-key > /vagrant/cert_key
+kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key3
+# kubeadm certs certificate-key > /vagrant/cert_key
 
 # export KUBECONFIG=/etc/kubernetes/admin.conf
 # chmod 755 /etc/kubernetes/admin.conf
