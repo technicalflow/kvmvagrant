@@ -9,22 +9,23 @@ INSTALLINGRESS=false
 # SAMPLEDEPLOY=false
 # SAMPLEWEBAPP=false
 
-mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
+# Already in provisionk8s.sh
+# mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
+# echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
+# curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
 
-mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
-containerd config default > /etc/containerd/config.toml
-sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.toml
-systemctl restart containerd.service && systemctl restart kubelet.service
+# mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
+# containerd config default > /etc/containerd/config.toml
+# sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.toml
+# systemctl restart containerd.service && systemctl restart kubelet.service
 
-kubeadm config images pull
+# kubeadm config images pull
 
 # Master Configuration
-# kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
-kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
+kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "k8sm1:6443"
+# kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
 mkdir -p /home/vagrant/.kube
 mkdir -p /root/.kube
@@ -38,7 +39,7 @@ kubeadm token list -o yaml | grep token: | awk '{print $2}' > /vagrant/kubeadm_j
 # kubectl -n kube-system get cm kubeadm-config -o json |jq -r '.data.ClusterConfiguration' > /vagrant/kubeadm-config.yaml
 # sed -i '/clusterName: kubernetes/a\controlPlaneEndpoint: k8sm1:6443' /vagrant/kubeadm-config.yaml
 # kubeadm init phase upload-certs --upload-certs --config /vagrant/kubeadm-config.yaml
-kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key3
+kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key
 # kubeadm certs certificate-key > /vagrant/cert_key
 
 # export KUBECONFIG=/etc/kubernetes/admin.conf

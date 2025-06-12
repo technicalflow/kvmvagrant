@@ -27,7 +27,7 @@ kubeadm config images pull
 # kubeadm init phase upload-certs --upload-certs --config /vagrant/kubeadm-config.yaml
 
 # Generate Certificate for control plane
-# kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key3
+# kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key
 # kubeadm certs certificate-key > /vagrant/cert_key
 
 # kubeadm token create --print-join-command
@@ -48,3 +48,8 @@ kubeadm config images pull
 # Edit Kubconfig
 # kubectl -n kube-system edit cm kubeadm-config
 # kubectl -n kube-system get cm kubeadm-config -oyaml
+
+# Nodes setup
+# kubeadm join 192.168.63.2:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash)
+
+# if [[ $(hostname) == *k8sm* ]] ; then echo "Master node"; else echo "Not Master node" ; fi
