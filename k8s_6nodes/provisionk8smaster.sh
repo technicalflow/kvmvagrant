@@ -38,11 +38,20 @@ ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION vip /kube-vip 
     --controlplane \
     --services \
     --arp \
-    --leaderElection | tee /etc/kubernetes/manifests/kube-vip.yaml | tee /vagrant/kube-vip.yaml
+    --leaderElection | tee /etc/kubernetes/manifests/kube-vip.yaml
+
+# Workaround for kube-vip issue with kubeadm
+sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' \
+          /etc/kubernetes/manifests/kube-vip.yaml
 
 # Master Configuration
 kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
+
+# Workaround for kube-vip issue with kubeadm 
+sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' \
+          /etc/kubernetes/manifests/kube-vip.yaml
+cp -r /etc/kubernetes/manifests/kube-vip.yaml /vagrant/kube-vip.yaml
 
 mkdir -p /home/vagrant/.kube
 mkdir -p /root/.kube
@@ -97,6 +106,7 @@ if $INSTALLHELM == true; then
 fi
 
 if [[ "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
+    helm repo update
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     helm template ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version 4.11.3 --namespace ingress-nginx > /vagrant/ingress.yaml
     sed -i 's|  type: LoadBalancer|  type: LoadBalancer\n  externalIPs:\n    - 192.168.50.238|' /vagrant/ingress.yaml
