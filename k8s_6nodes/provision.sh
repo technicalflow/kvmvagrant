@@ -1,6 +1,7 @@
-#!/bin/bash
-
 #!/usr/bin/env bash
+
+set -e
+
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
@@ -14,7 +15,6 @@ apt-get install -y \
     perl \
     curl \
     gnupg \
-    ntp \
     ca-certificates \
     apt-transport-https \
     gpg \
@@ -22,11 +22,9 @@ apt-get install -y \
 
 if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
 
-apt-get autoremove
 apt-get purge
+apt-get autoremove -y
 apt-get clean
-
-# Turn swap off
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
 swapoff -a
@@ -80,6 +78,6 @@ echo DONE
 # if [ $(hostname) == "k8smaster" ] ; then mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml && netplan apply; fi
 
 # For Debian12 to communicate from LAN network with VM
-if [ $(hostname) == "k8sm1" ] ; then sed -i '/      address 192.168.50.238/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
-if [ $(hostname) == "k8sm2" ] ; then sed -i '/      address 192.168.50.239/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
-if [ $(hostname) == "k8sm3" ] ; then sed -i '/      address 192.168.50.240/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
+if [ "$(hostname)" == "k8sm1" ] ; then sed -i '/      address 192.168.50.238/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
+if [ "$(hostname)" == "k8sm2" ] ; then sed -i '/      address 192.168.50.239/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
+if [ "$(hostname)" == "k8sm3" ] ; then sed -i '/      address 192.168.50.240/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
