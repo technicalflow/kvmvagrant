@@ -45,7 +45,7 @@ sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.con
           /etc/kubernetes/manifests/kube-vip.yaml
 
 # Master Configuration
-kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.200 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
+kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
 # Workaround for kube-vip issue with kubeadm 

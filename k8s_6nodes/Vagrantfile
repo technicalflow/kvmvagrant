@@ -157,7 +157,7 @@ mains.each do |mains|
       if auto
         m.vm.provision "shell", path: "./provisionk8s.sh", run: "once"
         m.vm.provision "shell", inline: "cp -r /vagrant/kube-vip.yaml /etc/kubernetes/manifests/kube-vip.yaml", run: "once"
-        m.vm.provision "shell", inline: "kubeadm join kube-api-server:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash) --control-plane --certificate-key $(cat /vagrant/cert_key) --apiserver-advertise-address #{vip} --apiserver-bind-port 6443", run: "once"
+        m.vm.provision "shell", inline: "kubeadm join kube-api-server:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash) --control-plane --certificate-key $(cat /vagrant/cert_key) --apiserver-advertise-address #{mains[:ipm]} --apiserver-bind-port 6443", run: "once"
       end
 end
 end
