@@ -45,7 +45,7 @@ sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.con
           /etc/kubernetes/manifests/kube-vip.yaml
 
 # Master Configuration
-kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
+kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.200 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
 # Workaround for kube-vip issue with kubeadm 
@@ -70,7 +70,8 @@ kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/
 
 # export KUBECONFIG=/etc/kubernetes/admin.conf
 # chmod 755 /etc/kubernetes/admin.conf
-sleep 10
+# Wait for kube-apiserver VIP to be ready
+sleep 40
 
 # Install Calico
 curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml

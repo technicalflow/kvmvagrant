@@ -25,6 +25,7 @@ end
 
 manager_ip = "192.168.63.2"
 manager_hostname = "k8sm1"
+vip = "192.168.63.200"
 
 File.open("./hosts", 'w') { |file|
   file.write("#{manager_ip} #{manager_hostname} #{manager_hostname}\n")
@@ -34,6 +35,7 @@ File.open("./hosts", 'w') { |file|
   instances.each do |i|
     file.write("#{i[:ip]} #{i[:name]} #{i[:name]}\n")
   end
+  file.write("#{vip} kube-api-server kube-api-server\n")
 }
 
 # Old proxy configuration
@@ -155,7 +157,7 @@ mains.each do |mains|
       if auto
         m.vm.provision "shell", path: "./provisionk8s.sh", run: "once"
         m.vm.provision "shell", inline: "cp -r /vagrant/kube-vip.yaml /etc/kubernetes/manifests/kube-vip.yaml", run: "once"
-        m.vm.provision "shell", inline: "kubeadm join 192.168.63.200:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash) --control-plane --certificate-key $(cat /vagrant/cert_key) --apiserver-advertise-address #{mains[:ipm]} --apiserver-bind-port 6443", run: "once"
+        m.vm.provision "shell", inline: "kubeadm join kube-api-server:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash) --control-plane --certificate-key $(cat /vagrant/cert_key) --apiserver-advertise-address #{vip} --apiserver-bind-port 6443", run: "once"
       end
 end
 end
