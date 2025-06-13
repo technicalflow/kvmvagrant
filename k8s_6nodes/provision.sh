@@ -17,6 +17,7 @@ apt-get install -y \
     ntp \
     ca-certificates \
     apt-transport-https \
+    gpg \
     jq
 
 if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi

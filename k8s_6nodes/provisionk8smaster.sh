@@ -2,6 +2,12 @@
 
 set -e
 
+export DEBIAN_FRONTEND=noninteractive
+
+VIP=192.168.63.200
+VIPINTERFACE=eth2
+KUBEVIPVERSION=v0.9.0
+
 INSTALLHELM=false
 INSTALLMETALLB=false
 INSTALLMETRICS=false
@@ -23,8 +29,19 @@ INSTALLINGRESS=false
 
 # kubeadm config images pull
 
+# Install Kube-VIP
+# alias kube-vip="ctr image pull ghcr.io/kube-vip/kube-vip:$KVVERSION; ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KVVERSION vip /kube-vip"
+ctr image pull ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION
+ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION vip /kube-vip manifest pod \
+    --interface $VIPINTERFACE \
+    --address $VIP \
+    --controlplane \
+    --services \
+    --arp \
+    --leaderElection | tee /etc/kubernetes/manifests/kube-vip.yaml | tee /vagrant/kube-vip.yaml
+
 # Master Configuration
-kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "k8sm1:6443"
+kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
 mkdir -p /home/vagrant/.kube

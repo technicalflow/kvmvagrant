@@ -87,12 +87,12 @@ Vagrant.configure("2") do |config|
       i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
       i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
 
-      i.vm.provision :ansible do |ansible|
-        ansible.verbose = "vv"
-        ansible.compatibility_mode = "2.0"
-    #    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
-        ansible.playbook = "/home/madmin/kvmvagrant/ansible/playbook.yml"
-      end
+    #   i.vm.provision :ansible do |ansible|
+    #     ansible.verbose = "vv"
+    #     ansible.compatibility_mode = "2.0"
+    # #    ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
+    #     ansible.playbook = "/home/madmin/kvmvagrant/ansible/playbook.yml"
+    #   end
 
       i.vm.provision "shell", path: "./provision.sh", run: "once"
 
@@ -140,12 +140,12 @@ mains.each do |mains|
         m.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
       end
  
-      m.vm.provision :ansible do |ansible|
-        ansible.verbose = "vv"
-        ansible.compatibility_mode = "2.0"
-     #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
-        ansible.playbook = "/home/madmin/kvmvagrant/ansible/playbook.yml"
-      end
+    #   m.vm.provision :ansible do |ansible|
+    #     ansible.verbose = "vv"
+    #     ansible.compatibility_mode = "2.0"
+    #  #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
+    #     ansible.playbook = "/home/madmin/kvmvagrant/ansible/playbook.yml"
+    #   end
 
       m.vm.provision "shell", path: "./provision.sh", run: "once"
 
@@ -155,7 +155,7 @@ mains.each do |mains|
       if auto
         m.vm.provision "shell", path: "./provisionk8s.sh", run: "once"
         m.vm.provision "shell", inline: "kubeadm join #{manager_ip}:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash) --control-plane --certificate-key $(cat /vagrant/cert_key) --apiserver-advertise-address #{mains[:ipm]} --apiserver-bind-port 6443", run: "once"
-        m.vm.provision "shell", inline: "export KUBECONFIG=/etc/kubernetes/admin.conf && kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key", run: "once"
+        # m.vm.provision "shell", inline: "export KUBECONFIG=/etc/kubernetes/admin.conf && kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key", run: "once"
       end
 end
 end
@@ -188,12 +188,12 @@ instances.each do |instances|
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
       end
  
-      i.vm.provision :ansible do |ansible|
-        ansible.verbose = "vv"
-        ansible.compatibility_mode = "2.0"
-     #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
-        ansible.playbook = "/home/madmin/kvmvagrant/ansible/playbook.yml"
-      end
+    #   i.vm.provision :ansible do |ansible|
+    #     ansible.verbose = "vv"
+    #     ansible.compatibility_mode = "2.0"
+    #  #   ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python3" }
+    #     ansible.playbook = "/home/madmin/kvmvagrant/ansible/playbook.yml"
+    #   end
 
       i.vm.provision "shell", path: "./provision.sh", run: "once"
 
