@@ -4,6 +4,7 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
+echo "========================== Install Kubernetes v1.32 =========================="
 mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
 
@@ -16,6 +17,8 @@ sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.
 systemctl restart containerd.service && systemctl restart kubelet.service
 
 kubeadm config images pull
+
+echo "========================== DONE =========================="
 
 # mkdir -p /home/vagrant/.kube
 # mkdir -p /root/.kube

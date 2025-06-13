@@ -29,6 +29,7 @@ INSTALLINGRESS=false
 
 # kubeadm config images pull
 
+echo "========================== Kube-VIP Install =========================="
 # Install Kube-VIP
 # alias kube-vip="ctr image pull ghcr.io/kube-vip/kube-vip:$KVVERSION; ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KVVERSION vip /kube-vip"
 ctr image pull ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION
@@ -45,6 +46,7 @@ sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.con
           /etc/kubernetes/manifests/kube-vip.yaml
 
 # Master Configuration
+echo "========================== Kubernetes Master Configuration INIT =========================="
 kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
@@ -59,6 +61,7 @@ cp -r /etc/kubernetes/admin.conf /home/vagrant/.kube/config
 cp -r /etc/kubernetes/admin.conf /root/.kube/config
 chown vagrant:vagrant /home/vagrant/.kube/config
 
+echo "========================== Export tokens =========================="
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' > /vagrant/ca_cert_hash
 kubeadm token list -o yaml | grep token: | awk '{print $2}' > /vagrant/kubeadm_join
 
@@ -71,9 +74,11 @@ kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/
 # export KUBECONFIG=/etc/kubernetes/admin.conf
 # chmod 755 /etc/kubernetes/admin.conf
 # Wait for kube-apiserver VIP to be ready
-sleep 40
+echo "========================== Sleep 80 seconds waiting for Kube-VIP IP =========================="
+sleep 80
 
 # Install Calico
+echo "========================== Install Calico =========================="
 curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
 kubectl create -f /vagrant/tigera.yaml
 sleep 5
