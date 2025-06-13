@@ -70,6 +70,7 @@ kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/
 
 # export KUBECONFIG=/etc/kubernetes/admin.conf
 # chmod 755 /etc/kubernetes/admin.conf
+sleep 10
 
 # Install Calico
 curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
