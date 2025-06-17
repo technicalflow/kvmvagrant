@@ -52,6 +52,8 @@ kernel.keys.maxkeys=2000
 vm.max_map_count=262144
 EOF
 
+sysctl --system
+
 ip a | grep inet
 echo DONE
 

@@ -77,12 +77,16 @@ kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/
 echo "========================== Sleep 80 seconds waiting for Kube-VIP IP =========================="
 sleep 80
 
+# while [ "$(curl -k -s -o /dev/null -w "%{http_code}" https://$VIP:6443)" != "403" ]; do
+#     echo 'sleep 5' && sleep 5
+# done
+
 # Install Calico
 echo "========================== Install Calico =========================="
 curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
 kubectl create -f /vagrant/tigera.yaml
 sleep 5
-curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
+curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
 # Insert pod network CIDR in calico.yaml
 sed -i 's|cidr:.*|cidr: 172.20.0.0/16|g' /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
@@ -143,3 +147,6 @@ fi
 # kubectl apply -f cert-manager.yaml --namespace cert-manager
 
 rm -rf /root/.kube
+
+# Provision pods on control plane nodes
+# kubectl taint nodes --all node-role.kubernetes.io/control-plane-
