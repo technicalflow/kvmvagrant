@@ -1,0 +1,43 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # config.vm.hostname = "pxeboot"
+  config.vm.boot_timeout = 600
+
+  config.vm.define :pxeclient do |pxeclient|
+    pxeclient.vm.provider :libvirt do |domain|
+      domain.storage :file, :size => '8G', :type => 'qcow2', :cache => 'writeback'
+      domain.boot 'network'      
+    #   boot_network = {'network' => 'maasnet01'}
+    #   domain.boot boot_network
+      domain.boot 'hd'
+      domain.cpus = 4
+      domain.memory = 2048
+      domain.nested = true
+      domain.driver = 'kvm'
+      domain.cpu_mode = 'host-passthrough'
+      # domain.disk_bus = 'virtio'
+      domain.machine_type = "q35"
+      domain.nic_model_type = 'virtio'
+      domain.connect_via_ssh = false
+    pxeclient.vm.network :private_network, libvirt__network_name: "maasnet01"
+
+  end
+end
+end
+
+# Bridge network configuration example:
+# Vagrant.configure("2") do |config|
+#   config.vm.define :pxeclient do |pxeclient|
+#     pxeclient.vm.network :public_network,
+#       dev: 'br1',
+#       auto_config: false
+#     pxeclient.vm.provider :libvirt do |domain|
+#       boot_network = {'dev' => 'br1'}
+#       domain.storage :file, :size => '100G'
+#       domain.boot boot_network
+#       domain.boot 'hd'
+#     end
+#   end
+# end
