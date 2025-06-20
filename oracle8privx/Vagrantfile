@@ -43,6 +43,7 @@ Vagrant.configure("2") do |config|
     ansible.playbook = "../ansible/playbook.yml"
 
   config.vm.provision "shell", path: "./provision.sh", run: "once"
+  config.vm.provision "shell", path: "./provisionprivx.sh", run: "once"
 
   config.vm.provision "shell", inline: <<-SHELL
     cat /etc/os-release
