@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+numworkers = 3
+instances = []
+
+(1..numworkers).each do |n|
+  instances.push({:name => "pxe#{n}"})
+end
+
+Vagrant.configure("2") do |config|
+  instances.each do |instance|
+    config.vm.boot_timeout = 600
+    config.vm.define instance[:name] do |i|
+      i.vm.provider :libvirt do |lv|
+          lv.storage :file, :size => '50G', :type => 'qcow2', :cache => 'writeback', :pool => 'default'
+#          lv.storage_pool_name = "ssdpool"
+          lv.storage :file, :size => '60G', :type => 'qcow2', :pool => 'ssdpool'
+#          lv.boot 'network'
+          boot_network = {'network' => 'maasnet01'}
+          lv.boot boot_network
+          lv.boot 'hd'
+          lv.cpus = 4
+          lv.memory = 8192
+          lv.nested = true
+          lv.driver = "kvm"
+          lv.machine_type = "q35"
+          lv.nic_model_type = "virtio"
+          lv.cpu_mode = "host-passthrough"
+          lv.loader = "/usr/share/ovmf/OVMF.fd"
+          lv.connect_via_ssh = false
+      end
+      i.vm.network :private_network, libvirt__network_name: "maasnet01"
+end
+end
+end
