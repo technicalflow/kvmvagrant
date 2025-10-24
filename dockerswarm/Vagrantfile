@@ -95,7 +95,7 @@ Vagrant.configure("2") do |config|
       end
 
       i.vm.provision "shell", path: "./provisionfull.sh", run: "once"
-      i.vm.provision "shell", path: "./provisiondockerlink.sh", run: "once"
+      i.vm.provision "shell", path: "./provisiondockerapt.sh", run: "once"
 
       if auto
         i.vm.provision "shell", inline: "docker swarm init --advertise-addr #{manager_ip}"
@@ -146,7 +146,7 @@ instances.each do |instance|
  
      # If you forgot about vagrant up --no-parallel
       i.vm.provision "shell", inline: "sleep 10"
-      i.vm.provision "shell", path: "./provisiondockerlink.sh"
+      i.vm.provision "shell", path: "./provisiondockerapt.sh
  
       if auto
         i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"

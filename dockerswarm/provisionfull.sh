@@ -50,7 +50,7 @@ network:
       routes:
       - to: 0.0.0.0/0
         via: 192.168.50.250
-        metric: 10
+        metric: 100
         on-link: true
     eth2:
       addresses:
