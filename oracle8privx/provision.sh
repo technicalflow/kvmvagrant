@@ -10,6 +10,8 @@ sudo echo LC_ALL=en_US.utf-8 >> /etc/environment
 
 sudo timedatectl set-timezone Europe/Warsaw
 
+sudo systemctl enable --now serial-getty@ttyS0.service
+
 #sudo dnf update -y
 #sudo dnf install epel-release -y
 #sudo dnf install htop -y

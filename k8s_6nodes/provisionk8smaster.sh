@@ -89,6 +89,7 @@ sleep 5
 curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
 # Insert pod network CIDR in calico.yaml
 sed -i 's|cidr:.*|cidr: 172.20.0.0/16|g' /vagrant/calico.yaml
+sed -i 's|encapsulation:.*|encapsulation: None|g' /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
 
 # # Install MetalLB
@@ -150,3 +151,23 @@ rm -rf /root/.kube
 
 # Provision pods on control plane nodes
 # kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+
+# Tigera operator Calico installation
+# # .tigera.io/v1. Installation
+# apiVersion: operator.tigera.io/v1
+# kind: Installation
+# metadata:
+#   name: default
+# spec:
+#   # Configures Calico networking.
+#   calicoNetwork:
+#     ipPools:
+#     - name: default-ipv4-ippool
+#       blockSize: 26
+#       cidr: 10.244.0.0/16
+#       encapsulation: None
+#       natOutgoing: Enabled
+#       nodeSelector: all()
+
+# kubectl get tigerastatus

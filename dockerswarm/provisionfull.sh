@@ -25,7 +25,7 @@ apt-get install -y \
     ca-certificates \
     apt-transport-https
 
-if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
+if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent && systemctl enable --now serial-getty@ttyS0.service; fi
 
 apt-get autoremove
 apt-get purge
