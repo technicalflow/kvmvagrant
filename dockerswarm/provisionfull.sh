@@ -57,5 +57,4 @@ network:
       - 192.168.60.2/24
 EOFroute
 
-if [ $(hostname) == "dsm" ] ; then mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml; fi
-netplan apply
+if [ $(hostname) == "dsm" ] ; then mv -f /vagrant/50-vagrant.yaml /etc/netplan/50-vagrant.yaml && netplan apply; fi

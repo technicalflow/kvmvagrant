@@ -5,5 +5,6 @@ curl -fsSL https://get.docker.com | sh
 
 # Access docker w/o sudo
 usermod -aG docker vagrant
-service docker restart
+systemctl restart docker.service
+# service docker restart
 docker version

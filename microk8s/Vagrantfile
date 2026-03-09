@@ -13,12 +13,12 @@ numcpu = 4
 instances = []
 
 (1..numworkers).each do |n|
-  instances.push({:name => "dsw#{n}", :ip => "192.168.60.#{n+2}"})
+  instances.push({:name => "msksidb13mk8s0#{n+1}", :ip => "192.168.65.#{n+2}"})
 end
 
 # Manager IP and hostname
-manager_ip = "192.168.60.2"
-manager_hostname = "dsm"
+manager_ip = "192.168.65.2"
+manager_hostname = "msksidb13mk8s01"
 
 File.open("./hosts", 'w') { |file|
   file.write("#{manager_ip} #{manager_hostname} #{manager_hostname}\n")
@@ -27,59 +27,54 @@ File.open("./hosts", 'w') { |file|
   end
   }
 
-# Old Proxy configuration
-# http_proxy = ""
-# Proxy configuration
-# if ENV['http_proxy']
-#       http_proxy = ENV['http_proxy']
-#         https_proxy = ENV['https_proxy']
-# end
-
-# no_proxy = "localhost,127.0.0.1,#{manager_ip}"
-# instances.each do |instance|
-#     no_proxy += ",#{instance[:ip]}"
-# end
-
 Vagrant.configure("2") do |config|
-    config.vm.define "dsm" do |i|
+    config.vm.define "msksidb13mk8s01" do |i|
       i.vm.provider :libvirt do |libvirt|
         libvirt.cpus = "#{numcpu}"
         libvirt.memory = "#{vmmemory}"
         libvirt.nested = true
-        # libvirt.name = "#{manager_hostname}"
         libvirt.driver = "kvm"
         libvirt.disk_bus = "virtio"
         libvirt.disk_driver :cache => "writeback"
         libvirt.machine_type = "q35"
         libvirt.nic_model_type = "virtio"
         libvirt.cpu_mode = "host-passthrough"
+        # libvirt.storage :file, :size => '60G', :type => 'qcow2', :cache => 'writeback', :pool => 'ssdpool'
         libvirt.storage_pool_name = "ssdpool"
+
       end
-      i.vm.box = "bento/ubuntu-22.04"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = "#{manager_hostname}"
 
       i.vm.network :public_network,
         :dev => "br0",
         :mode => "bridge",
         :type => "bridge",
-        :ip => "192.168.50.232",
+        :ip => "192.168.50.120",
         :autostart => "true"
 
       i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
       i.vm.synced_folder ".", "/vagrant", 
           # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
-         type: "nfs",  ### Enable for Ubuntu based systems
-         nfs_version: 4, ### Enable for Ubuntu based systems
-         nfs_udp: false  ### Enable for Ubuntu based systems
+         type: "nfs" ### Enable for Ubuntu based systems
+        #  nfs_version: 4, ### Enable for Ubuntu based systems
+        #  nfs_udp: false  ### Enable for Ubuntu based systems
 
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
       end
 
-      # i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-      # i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
-      # i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
+#      i.vm.provision "file", source: "~/.ssh/id.rsa.pub", destination: "~/.ssh/me.pub"
+#      i.vm.provision "shell", inline: <<-SHELL
+#         mkdir -p /home/vagrant/.ssh/
+#         touch /home/vagrant/.ssh/authorized_keys
+#         cat /home/vagrant/.ssh/me.pub >> /home/vagrant/.ssh/authorized_keys
+#      SHELL
+
+      i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
+      i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
+      i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
 
       i.vm.provision :ansible do |ansible|
         ansible.verbose = "v"
@@ -88,12 +83,10 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "../ansible/playbook.yml"
       end
 
-      i.vm.provision "shell", path: "./provisionfull.sh", run: "once"
-      i.vm.provision "shell", path: "./provisiondockerapt.sh", run: "once"
+      i.vm.provision "shell", path: "./provision.sh", run: "once"
 
       if auto
-        i.vm.provision "shell", inline: "docker swarm init --advertise-addr #{manager_ip}"
-        i.vm.provision "shell", inline: "docker swarm join-token -q worker > /vagrant/token"
+        i.vm.provision "shell", inline: "microk8s add-node --token $(cat /vagrant/token) --format short --token-ttl 1200 | grep #{manager_ip} > /vagrant/microk8s.join && sed -i 's|^microk8s join *||' /vagrant/microk8s.join && sed -i 's/$/ --worker/' /vagrant/microk8s.join"
       end
 end
 
@@ -111,24 +104,24 @@ instances.each do |instance|
           lv.cpu_mode = "host-passthrough"
           lv.storage_pool_name = "ssdpool"
       end
-      i.vm.box = "bento/ubuntu-22.04"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = instance[:name]
       i.vm.network :private_network, ip: "#{instance[:ip]}"
  
       i.vm.synced_folder ".", "/vagrant",
           # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
-          type: "nfs",  ### Enable for Ubuntu based systems
-          nfs_version: 4, ### Enable for Ubuntu based systems
-          nfs_udp: false  ### Enable for Ubuntu based systems
+          type: "nfs"  ### Enable for Ubuntu based systems
+        #  nfs_version: 4, ### Enable for Ubuntu based systems
+        #  nfs_udp: false  ### Enable for Ubuntu based systems
  
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
       end
  
-     #  i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-     #  i.vm.provision "file", source: "../ansible/roles/CopyConfig/files/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
-     #  i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
+      i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
+      i.vm.provision "file", source: "../ansible/roles/CopyConfig/files/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
+      i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
  
       i.vm.provision :ansible do |ansible|
         ansible.verbose = "v"
@@ -137,14 +130,10 @@ instances.each do |instance|
         ansible.playbook = "../ansible/playbook.yml"
       end
 
-      i.vm.provision "shell", path: "./provisionfull.sh"
- 
-     # If you forgot about vagrant up --no-parallel
-      i.vm.provision "shell", inline: "sleep 10"
-      i.vm.provision "shell", path: "./provisiondockerapt.sh
+      i.vm.provision "shell", path: "./provision.sh", run: "once"
  
       if auto
-        i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
+        i.vm.provision "shell", inline: "/usr/sbin/microk8s join $(cat /vagrant/microk8s.join)"
       end
 end
 end
