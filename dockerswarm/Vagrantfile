@@ -55,7 +55,7 @@ Vagrant.configure("2") do |config|
         libvirt.cpu_mode = "host-passthrough"
         libvirt.storage_pool_name = "ssdpool"
       end
-      i.vm.box = "bento/ubuntu-22.04"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = "#{manager_hostname}"
 
       i.vm.network :public_network,
@@ -68,18 +68,14 @@ Vagrant.configure("2") do |config|
       i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
       i.vm.synced_folder ".", "/vagrant", 
           # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
-         type: "nfs",  ### Enable for Ubuntu based systems
-         nfs_version: 4, ### Enable for Ubuntu based systems
-         nfs_udp: false  ### Enable for Ubuntu based systems
+         type: "nfs"  ### Enable for Ubuntu based systems
+      #   nfs_version: 4, ### Enable for Ubuntu based systems
+      #   nfs_udp: false  ### Enable for Ubuntu based systems
 
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
       end
-
-      # i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-      # i.vm.provision "file", source: "../ansible/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
-      # i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
 
       i.vm.provision :ansible do |ansible|
         ansible.verbose = "v"
@@ -111,24 +107,20 @@ instances.each do |instance|
           lv.cpu_mode = "host-passthrough"
           lv.storage_pool_name = "ssdpool"
       end
-      i.vm.box = "bento/ubuntu-22.04"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = instance[:name]
       i.vm.network :private_network, ip: "#{instance[:ip]}"
  
       i.vm.synced_folder ".", "/vagrant",
           # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
-          type: "nfs",  ### Enable for Ubuntu based systems
-          nfs_version: 4, ### Enable for Ubuntu based systems
-          nfs_udp: false  ### Enable for Ubuntu based systems
+          type: "nfs"  ### Enable for Ubuntu based systems
+        #  nfs_version: 4, ### Enable for Ubuntu based systems
+        #  nfs_udp: false  ### Enable for Ubuntu based systems
  
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
       end
- 
-     #  i.vm.provision "shell", inline: "mkdir -p /home/vagrant/.ssh/"
-     #  i.vm.provision "file", source: "../ansible/roles/CopyConfig/files/ansible.pub", destination: "/home/vagrant/.ssh/ansible.pub"
-     #  i.vm.provision "shell", inline: "cat /home/vagrant/.ssh/ansible.pub >> /home/vagrant/.ssh/authorized_keys"
  
       i.vm.provision :ansible do |ansible|
         ansible.verbose = "v"
@@ -138,11 +130,9 @@ instances.each do |instance|
       end
 
       i.vm.provision "shell", path: "./provisionfull.sh"
- 
-     # If you forgot about vagrant up --no-parallel
       i.vm.provision "shell", inline: "sleep 10"
-      i.vm.provision "shell", path: "./provisiondockerapt.sh
- 
+      i.vm.provision "shell", path: "./provisiondockerapt.sh"
+
       if auto
         i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
       end
