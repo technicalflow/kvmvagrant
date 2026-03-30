@@ -10,11 +10,11 @@ BOX_NAME = "oraclelinux/9"
 
 ui = Vagrant::UI::Prefixed.new(Vagrant::UI::Colored.new, "vagrant")
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure("2") do |config|
   config.vm.box = BOX_NAME
   config.vm.box_url = "#{BOX_URL}/#{BOX_NAME}.json"
-  config.vm.define "msksiol9test01"
-  config.vm.hostname = "msksiol9test01"
+  config.vm.define "msksioel9prix01"
+  config.vm.hostname = "msksioel9prix01"
   config.vm.provider :libvirt do |v|
     v.cpus = 4
     v.memory = 2048
@@ -25,19 +25,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.machine_type = "q35"
     v.cpu_mode = "host-passthrough"
     v.nic_model_type = "virtio"
+    v.storage_pool_name = "ssdpool"
+    v.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+    v.serial :type => "pty"
   end
 
   config.vm.network :public_network,
     :dev => "br0",
     :mode => "bridge",
     :type => "bridge",
-    :ip => "192.168.50.235"
+    :ip => "192.168.50.228"
 
   config.vm.synced_folder ".", "/vagrant",
     # owner: "vagrant", group: "vagrant"
     type: "nfs",
     nfs_version: 4,
     nfs_udp: false
+
+  config.vm.provision :ansible do |ansible|
+    ansible.verbose = "v"
+    # ansible.compatibility_mode = "2.0"
+    # ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python2" }
+    ansible.playbook = "../ansible/playbook.yml"
 
   config.vm.provision "shell", inline: <<-SHELL
     cat /etc/os-release
@@ -66,4 +75,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision "shell", inline: "echo 'INSTALLER: Installation complete, Oracle Linux 9 ready to use!'"
 
+end
 end

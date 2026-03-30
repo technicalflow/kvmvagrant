@@ -41,7 +41,8 @@ Vagrant.configure("2") do |config|
         libvirt.cpu_mode = "host-passthrough"
         # libvirt.storage :file, :size => '60G', :type => 'qcow2', :cache => 'writeback', :pool => 'ssdpool'
         libvirt.storage_pool_name = "ssdpool"
-
+        libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+        libvirt.serial :type => "pty"
       end
       i.vm.box = "debian/trixie64"
       i.vm.hostname = "#{manager_hostname}"
@@ -103,6 +104,8 @@ instances.each do |instance|
           lv.nic_model_type = "virtio"
           lv.cpu_mode = "host-passthrough"
           lv.storage_pool_name = "ssdpool"
+          lv.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+          lv.serial :type => "pty"
       end
       i.vm.box = "debian/trixie64"
       i.vm.hostname = instance[:name]

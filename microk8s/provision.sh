@@ -2,6 +2,8 @@
 
 set -e
 
+USER=madmin
+
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
@@ -65,6 +67,11 @@ ip r
 apt-get update && apt-get install -y snapd
 systemctl enable --now snapd.service
 snap refresh && snap install microk8s --classic
+
+usermod -aG microk8s $USER
+mkdir -p /home/$USER/.kube
+chmod 0700 /home/$USER/.kube
+
 ln -s /snap/bin/microk8s /usr/sbin/microk8s
 
 # openssl rand -hex 16 > /vagrant/token

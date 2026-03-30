@@ -2,7 +2,8 @@
 # vi: set ft=ruby :
 
 manager_hostname = "debian12"
-image_name = "generic/debian12"
+image_name = "debian/testing64"
+# image_name = "alvistack/debian-12"
 
 Vagrant.configure("2") do |config|
   config.vm.box = "#{image_name}"
@@ -19,7 +20,12 @@ Vagrant.configure("2") do |config|
     libvirt.disk_driver :cache => "writeback"
     libvirt.machine_type = "q35"
     libvirt.nic_model_type = "virtio"
+    libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+    libvirt.serial :type => "pty"
     # libvirt.nvram = "/var/lib/libvirt/qemu/nvram/OVMF_VARS.fd"
+    libvirt.loader = "/usr/share/OVMF/OVMF_CODE.fd"
+    libvirt.nvram = "/usr/share/OVMF/OVMF_VARS_4M.fd"
+    libvirt.machine_type = 'pc-q35-focal'
   end
 
   config.vm.provision :ansible do |ansible|

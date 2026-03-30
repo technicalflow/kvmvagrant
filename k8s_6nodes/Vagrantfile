@@ -64,6 +64,8 @@ Vagrant.configure("2") do |config|
         libvirt.disk_driver :cache => "writeback"
         libvirt.machine_type = "q35"
         libvirt.nic_model_type = "virtio"
+        libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+        libvirt.serial :type => "pty"
       end
       i.vm.box = "roboxes-x64/debian12"
       i.vm.hostname = "#{manager_hostname}"
@@ -175,6 +177,8 @@ instances.each do |instances|
           lv.disk_driver :cache => "writeback"
           lv.machine_type = "q35"
           lv.nic_model_type = "virtio"
+          lv.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+          lv.serial :type => "pty"
       end
       i.vm.box = "roboxes-x64/debian12"
       i.vm.hostname = instances[:name]
