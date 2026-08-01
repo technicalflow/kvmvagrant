@@ -53,7 +53,13 @@ Vagrant.configure("2") do |config|
         libvirt.machine_type = "q35"
         libvirt.nic_model_type = "virtio"
         libvirt.cpu_mode = "host-passthrough"
-        libvirt.storage_pool_name = "ssdpool"
+        # Add video type for Rhel10
+        libvirt.video_type = "vga"
+        libvirt.video_vram = 16384
+        # Add Serial for qemu agent communication
+        libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+        libvirt.serial :type => "pty"
+        # libvirt.storage_pool_name = "ssdpool"
       end
       i.vm.box = "debian/trixie64"
       i.vm.hostname = "#{manager_hostname}"
@@ -67,10 +73,14 @@ Vagrant.configure("2") do |config|
 
       i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
       i.vm.synced_folder ".", "/vagrant", 
-          # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
-         type: "nfs"  ### Enable for Ubuntu based systems
+      # owner: "vagrant", group: "vagrant",
+      #  type: "nfs"  ### Enable for Ubuntu based systems
       #   nfs_version: 4, ### Enable for Ubuntu based systems
       #   nfs_udp: false  ### Enable for Ubuntu based systems
+      # Working setting for RHEL10
+        type: "nfs",
+        nfs_version: 4,
+        nfs_udp: false 
 
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
@@ -105,17 +115,28 @@ instances.each do |instance|
           lv.machine_type = "q35"
           lv.nic_model_type = "virtio"
           lv.cpu_mode = "host-passthrough"
-          lv.storage_pool_name = "ssdpool"
+          # Add video type for Rhel10
+          lv.video_type = "vga"
+          lv.video_vram = 16384
+          # Add Serial for qemu agent communication
+          lv.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+          lv.serial :type => "pty"
+          # lv.storage_pool_name = "ssdpool"
       end
       i.vm.box = "debian/trixie64"
       i.vm.hostname = instance[:name]
       i.vm.network :private_network, ip: "#{instance[:ip]}"
  
       i.vm.synced_folder ".", "/vagrant",
-          # owner: "vagrant", group: "vagrant" ### Enable for Redhat based systems
-          type: "nfs"  ### Enable for Ubuntu based systems
-        #  nfs_version: 4, ### Enable for Ubuntu based systems
-        #  nfs_udp: false  ### Enable for Ubuntu based systems
+      # owner: "vagrant", group: "vagrant",
+      #  type: "nfs"  ### Enable for Ubuntu based systems
+      #   nfs_version: 4, ### Enable for Ubuntu based systems
+      #   nfs_udp: false  ### Enable for Ubuntu based systems
+
+      # Working setting for RHEL10
+        type: "nfs",
+        nfs_version: 4,
+        nfs_udp: false
  
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
