@@ -1,4 +1,4 @@
- -*- mode: ruby -*-
+# -*- mode: ruby -*-
 # vi: set ft=ruby :
 
 image_name = "opensuse/Leap-15.6.x86_64"

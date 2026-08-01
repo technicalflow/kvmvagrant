@@ -21,6 +21,13 @@ Vagrant.configure("2") do |config|
       domain.machine_type = "q35"
       domain.nic_model_type = 'virtio'
       domain.connect_via_ssh = false
+      # Add video type for Rhel10
+      domain.video_type = "vga"
+      domain.video_vram = 16384
+      # Add Serial for qemu agent communication
+      domain.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+      domain.serial :type => "pty"
+
     pxeclient.vm.network :private_network, libvirt__network_name: "maasnet01"
 
   end

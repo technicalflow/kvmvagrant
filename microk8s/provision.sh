@@ -2,7 +2,7 @@
 
 set -e
 
-USER=madmin
+USER=vagrant
 
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
