@@ -18,7 +18,6 @@ Vagrant.configure("2") do |config|
     libvirt.cpu_mode = "host-passthrough"
     libvirt.disk_bus = "virtio"
     libvirt.disk_driver :cache => "writeback"
-    libvirt.machine_type = "q35"
     libvirt.nic_model_type = "virtio"
     libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
     libvirt.serial :type => "pty"
@@ -31,7 +30,7 @@ Vagrant.configure("2") do |config|
     # For ubuntu
     # libvirt.machine_type = "pc-q35-focal"
     # For rhel 10
-    libvirt.machine_type = "pc-q35-rhel10.2.0"
+    libvirt.machine_type = "q35"
   end
 
   config.vm.provision :ansible do |ansible|
