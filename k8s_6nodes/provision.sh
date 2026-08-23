@@ -13,6 +13,8 @@ apt-get install -y \
     gcc \
     make \
     perl \
+    git \
+    dialog \
     curl \
     gnupg \
     ca-certificates \

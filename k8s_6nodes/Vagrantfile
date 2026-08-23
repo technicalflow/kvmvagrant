@@ -16,16 +16,16 @@ mains = []
 instances = []
 
 (1..nummasters).each do |m|
-  mains.push({:name => "k8sm#{m+1}", :ipm => "192.168.63.#{m+2}", :ipp => "192.168.50.#{m+238}"})
+  mains.push({:name => "k8sm#{m+1}", :ipm => "192.168.67.#{m+2}", :ipp => "192.168.50.#{m+238}"})
 end
 
 (1..numworkers).each do |n|
-  instances.push({:name => "k8snode#{n}", :ip => "192.168.63.#{n+10}"})
+  instances.push({:name => "k8snode#{n}", :ip => "192.168.67.#{n+10}"})
 end
 
-manager_ip = "192.168.63.2"
+manager_ip = "192.168.67.2"
 manager_hostname = "k8sm1"
-vip = "192.168.63.200"
+vip = "192.168.67.200"
 vipdns = "kubernetes"
 
 File.open("./hosts", 'w') { |file|
@@ -64,10 +64,14 @@ Vagrant.configure("2") do |config|
         libvirt.disk_driver :cache => "writeback"
         libvirt.machine_type = "q35"
         libvirt.nic_model_type = "virtio"
+        # Add video type for Rhel10
+        libvirt.video_type = "vga"
+        libvirt.video_vram = 16384
         libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
         libvirt.serial :type => "pty"
       end
-      i.vm.box = "roboxes-x64/debian12"
+      # i.vm.box = "roboxes-x64/debian12"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = "#{manager_hostname}"
 
       i.vm.network :public_network,
@@ -83,6 +87,7 @@ Vagrant.configure("2") do |config|
         type: "nfs",
         nfs_version: 4,
         nfs_udp: false
+
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
@@ -119,8 +124,14 @@ mains.each do |mains|
           lv.disk_driver :cache => "writeback"
           lv.machine_type = "q35"
           lv.nic_model_type = "virtio"
+          # Add video type for Rhel10
+          lv.video_type = "vga"
+          lv.video_vram = 16384
+          lv.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+          lv.serial :type => "pty"
       end
-      m.vm.box = "roboxes-x64/debian12"
+      # m.vm.box = "roboxes-x64/debian12"
+      m.vm.box = "debian/trixie64"
       m.vm.hostname = mains[:name]
       m.vm.network :public_network,
         :dev => "br0",
@@ -177,10 +188,13 @@ instances.each do |instances|
           lv.disk_driver :cache => "writeback"
           lv.machine_type = "q35"
           lv.nic_model_type = "virtio"
+          lv.video_type = "vga"
+          lv.video_vram = 16384
           lv.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
           lv.serial :type => "pty"
       end
-      i.vm.box = "roboxes-x64/debian12"
+      # i.vm.box = "roboxes-x64/debian12"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = instances[:name]
       
       i.vm.network :private_network, ip: "#{instances[:ip]}"

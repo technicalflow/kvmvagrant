@@ -52,8 +52,14 @@ Vagrant.configure("2") do |config|
         libvirt.disk_driver :cache => "writeback"
         libvirt.machine_type = "q35"
         libvirt.nic_model_type = "virtio"
+        # Add video type for Rhel10
+        libvirt.video_type = "vga"
+        libvirt.video_vram = 16384
+        libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+        libvirt.serial :type => "pty"
       end
-      i.vm.box = "roboxes-x64/debian12"
+      # i.vm.box = "roboxes-x64/debian12"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = "#{manager_hostname}"
 
       i.vm.network :public_network,
@@ -64,10 +70,12 @@ Vagrant.configure("2") do |config|
         :autostart => "true"
 
       i.vm.network :private_network, :ip => "#{manager_ip}", :autostart => "true"
-      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
-#          type: "nfs",
-#          nfs_version: 4,
-#          nfs_udp: false
+      i.vm.synced_folder ".", "/vagrant",
+           # owner: "vagrant", group: "vagrant", nfs_udp: false
+          type: "nfs",
+          nfs_version: 4,
+          nfs_udp: false
+
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
         i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
@@ -103,12 +111,24 @@ instances.each do |instance|
           lv.disk_driver :cache => "writeback"
           lv.machine_type = "q35"
           lv.nic_model_type = "virtio"
+           # Add video type for Rhel10
+          lv.video_type = "vga"
+          lv.video_vram = 16384
+          # Add Serial for qemu agent communication
+          lv.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+          lv.serial :type => "pty"
+
       end
-      i.vm.box = "roboxes-x64/debian12"
+      # i.vm.box = "roboxes-x64/debian12"
+      i.vm.box = "debian/trixie64"
       i.vm.hostname = instance[:name]
       i.vm.network :private_network, ip: "#{instance[:ip]}"
  
-      i.vm.synced_folder ".", "/vagrant", owner: "vagrant", group: "vagrant", nfs_udp: false
+      i.vm.synced_folder ".", "/vagrant", 
+           # owner: "vagrant", group: "vagrant", nfs_udp: false
+          type: "nfs",
+          nfs_version: 4,
+          nfs_udp: false
  
       if File.file?("./hosts")
         i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
