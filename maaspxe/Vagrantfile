@@ -15,7 +15,7 @@ Vagrant.configure("2") do |config|
       i.vm.provider :libvirt do |lv|
           lv.storage :file, :size => '50G', :type => 'qcow2', :cache => 'writeback', :pool => 'default'
 #          lv.storage_pool_name = "ssdpool"
-          lv.storage :file, :size => '60G', :type => 'qcow2', :pool => 'ssdpool'
+          lv.storage :file, :size => '60G', :type => 'qcow2', :pool => 'default'
 #          lv.boot 'network'
           boot_network = {'network' => 'maasnet01'}
           lv.boot boot_network
@@ -27,10 +27,28 @@ Vagrant.configure("2") do |config|
           lv.machine_type = "q35"
           lv.nic_model_type = "virtio"
           lv.cpu_mode = "host-passthrough"
-          lv.loader = "/usr/share/ovmf/OVMF.fd"
+          lv.video_type = "vga"
+          lv.video_vram = 16384
+          lv.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+          lv.serial :type => "pty"
+          lv.loader = "/usr/share/edk2/ovmf/OVMF_CODE.fd"
+          lv.nvram = "/var/lib/libvirt/qemu/nvram/#{instance[:name]}_VARS.fd"
+          # For simpler loader use and turn off nvram
+          # lv.loader = "/usr/share/ovmf/OVMF.fd"
           lv.connect_via_ssh = false
       end
-      i.vm.network :private_network, libvirt__network_name: "maasnet01"
-end
+
+    # For booting in PXE from existing network, use the following configuration:
+    #    i.vm.network :private_network, libvirt__network_name: "maasnet01"
+
+    # For booting in PXE from a new network, use the following configuration:
+      i.vm.network :private_network,
+        type: "dhcp",
+        libvirt__network_name: "maasnet01",
+        libvirt__network_address: "192.168.95.0",
+        libvirt__netmask: "255.255.255.0",
+        libvirt__dhcp_start: "192.168.95.2",
+        libvirt__dhcp_stop: "192.168.95.254"
+      end
 end
 end

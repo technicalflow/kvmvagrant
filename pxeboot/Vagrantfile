@@ -8,9 +8,9 @@ Vagrant.configure("2") do |config|
   config.vm.define :pxeclient do |pxeclient|
     pxeclient.vm.provider :libvirt do |domain|
       domain.storage :file, :size => '8G', :type => 'qcow2', :cache => 'writeback'
-      domain.boot 'network'      
-    #   boot_network = {'network' => 'maasnet01'}
-    #   domain.boot boot_network
+      # domain.boot 'network'      or define a network to boot from, e.g.: 
+      boot_network = { 'network' => 'maasnet01' }
+      domain.boot boot_network
       domain.boot 'hd'
       domain.cpus = 4
       domain.memory = 2048
@@ -27,11 +27,21 @@ Vagrant.configure("2") do |config|
       # Add Serial for qemu agent communication
       domain.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
       domain.serial :type => "pty"
+      
+    end
 
-    pxeclient.vm.network :private_network, libvirt__network_name: "maasnet01"
+    # For booting in PXE from existing network, use the following configuration:
+    #    pxeclient.vm.network :private_network, libvirt__network_name: "maasnet01"
 
-  end
-end
+    # For booting in PXE from a new network, use the following configuration:
+    pxeclient.vm.network :private_network,
+      type: "dhcp",
+      libvirt__network_name: "maasnet01",
+      libvirt__network_address: "192.168.95.0",
+      libvirt__netmask: "255.255.255.0",
+      libvirt__dhcp_start: "192.168.95.2",
+      libvirt__dhcp_stop: "192.168.95.254"
+    end
 end
 
 # Bridge network configuration example:

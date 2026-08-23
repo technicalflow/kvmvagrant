@@ -17,15 +17,19 @@ Vagrant.configure("2") do |config|
       :ip => "192.168.50.230"
   
   config.vm.synced_folder ".", "/vagrant",
-    owner: "vagrant", group: "vagrant"
-      # type: "nfs",
-      # nfs_version: 4,
-      # nfs_udp: false
+    # owner: "vagrant", group: "vagrant"
+        type: "nfs",
+        nfs_version: 4,
+        nfs_udp: false 
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.cpus = 4
     libvirt.memory = 2048
     libvirt.nested = true
+    libvirt.video_type = "vga"
+    libvirt.video_vram = 16384
+    libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+    libvirt.serial :type => "pty"
   end
 
 #  config.vm.provision :ansible do |ansible|

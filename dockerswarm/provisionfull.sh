@@ -20,6 +20,8 @@ apt-get install -y \
     make \
     curl \
     gnupg \
+    git \
+    dialog \
     wget \
     ca-certificates \
     apt-transport-https
