@@ -16,14 +16,16 @@ apt-get install -y \
     git \
     dialog \
     gnupg \
-    ntp \
     ca-certificates \
-    apt-transport-https
+    apt-transport-https \
+    gpg \
+    ethtool \
+    jq
 
 if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
 
-apt-get autoremove
-apt-get purge
+apt-get autoremove -y
+apt-get purge -y
 apt-get clean
 
 # Turn swap off
@@ -42,7 +44,18 @@ tee /etc/sysctl.d/10-kubernetes.conf<<EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
+net.core.rmem_max = 262144
+net.core.wmem_max = 262144
+net.ipv4.tcp_rmem = 4096 87380 33554432
+net.ipv4.tcp_wmem = 4096 65536 33554432
+net.ipv4.ip_unprivileged_port_start=80
+vm.swappiness=10
+fs.aio-max-nr=524288
+kernel.keys.maxbytes=2000000
+kernel.keys.maxkeys=2000
+vm.max_map_count=262144
 EOF
+sysctl --system
 
 ip a | grep inet
 echo DONE

@@ -20,13 +20,16 @@ apt-get install -y \
     ca-certificates \
     apt-transport-https \
     gpg \
+    ethtool \
     jq
 
 if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
 
-apt-get purge
+
+apt-get purge -y
 apt-get autoremove -y
 apt-get clean
+# Turn swap off
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
 swapoff -a

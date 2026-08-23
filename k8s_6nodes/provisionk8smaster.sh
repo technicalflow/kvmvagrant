@@ -4,7 +4,7 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
-VIP=192.168.63.200
+VIP=192.168.67.200
 VIPINTERFACE=eth2
 KUBEVIPVERSION=v0.9.0
 
@@ -47,7 +47,7 @@ sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.con
 
 # Master Configuration
 echo "========================== Kubernetes Master Configuration INIT =========================="
-kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.63.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
+kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.67.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
 # Workaround for kube-vip issue with kubeadm 
