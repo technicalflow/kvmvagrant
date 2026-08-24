@@ -4,7 +4,7 @@
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
+# export LC_ALL=en_US.UTF-8
 
 timedatectl set-timezone Europe/Warsaw
 
@@ -27,6 +27,8 @@ if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agen
 apt-get autoremove -y
 apt-get purge -y
 apt-get clean
+
+# sed -i '/^::1/d' /etc/hosts
 
 # Turn swap off
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
@@ -58,7 +60,7 @@ EOF
 sysctl --system
 
 ip a | grep inet
-echo DONE
+echo provision.sh DONE
 
 # Only if communicating from LAN network with VM on Ubuntu 18.04
 # cat << EOFroute > /vagrant/50-vagrant.yaml

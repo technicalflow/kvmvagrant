@@ -22,7 +22,7 @@ systemctl restart containerd.service && systemctl restart kubelet.service
 
 echo " Images pull for kubeadm"
 # kubeadm config images pull
-kubeadm config images pull --kubernetes-version v1.32.0
+kubeadm config images pull --kubernetes-version v1.32.13
 
 # Master Configuration
 echo " Kubernetes Master Configuration INIT"
@@ -35,7 +35,6 @@ cp -r /etc/kubernetes/admin.conf /home/vagrant/.kube/config
 cp -r /etc/kubernetes/admin.conf /root/.kube/config
 chown vagrant:vagrant /home/vagrant/.kube/config
 
-rm -rf /root/.kube
 
 echo " Generate CA certificate hash"
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' > /vagrant/ca_cert_hash
@@ -44,31 +43,32 @@ kubeadm token list -o yaml | grep token: | awk '{print $2}' > /vagrant/kubeadm_j
 # export KUBECONFIG=/etc/kubernetes/admin.conf
 # chmod 755 /etc/kubernetes/admin.conf
 
-echo " Install Calico"
-curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
+echo " Install Tigera Calico"
+curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
 kubectl create -f /vagrant/tigera.yaml
 sleep 5
-curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
+echo " Install Calico"
+curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
 # Insert pod network CIDR in calico.yaml
 sed -i 's|cidr:.*|cidr: 172.20.0.0/16|g' /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
 
 echo " Install MetalLB"
-if $INSTALLMETALLB == true; then
-    curl -fs https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml > /vagrant/metallb.yaml
+if [[ "$INSTALLMETALLB" == true ]]; then
+    curl -fsSL https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml > /vagrant/metallb.yaml
     kubectl apply -f /vagrant/metallb.yaml
     # kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 fi
 
 echo " Install Metrics Server"
-if $INSTALLMETRICS == true; then
+if [[ "$INSTALLMETRICS" == true ]]; then
     wget -q -O /vagrant/components.yaml https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
     sed -i 's| - --secure-port=10250| - --secure-port=10250\n        - --kubelet-insecure-tls|' /vagrant/components.yaml
     kubectl apply -f /vagrant/components.yaml
 fi
 
 echo " Install Helm"
-if $INSTALLHELM == true; then
+if [[ "$INSTALLHELM" == true ]]; then
     curl -fsSL -o /vagrant/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
     chmod 700 /vagrant/get_helm.sh
     /vagrant/get_helm.sh
@@ -87,7 +87,7 @@ if [[ "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
 fi
 
 echo " Sample with Ingress Configuration"
-if [[ "$SAMPLEWEBAPP" == true && "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true]]; then
+if [[ "$SAMPLEWEBAPP" == true && "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
     kubectl apply -f /vagrant/samplewebappingress.yaml
 fi
 
@@ -95,6 +95,8 @@ echo " Sample Deployment"
 if [[ "$SAMPLEDEPLOY" == true && "$INSTALLMETALLB" == true ]]; then
     kubectl apply -f /vagrant/samplenginx.yaml
 fi
+
+rm -rf /root/.kube
 
 # Dashboard
 # helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
@@ -106,4 +108,3 @@ fi
 # curl -LO https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
 # kubectl create ns cert-manager
 # kubectl apply -f cert-manager.yaml --namespace cert-manager
-

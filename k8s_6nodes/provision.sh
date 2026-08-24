@@ -5,7 +5,7 @@ set -e
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
+# export LC_ALL=en_US.UTF-8
 
 timedatectl set-timezone Europe/Warsaw
 
@@ -24,7 +24,6 @@ apt-get install -y \
     jq
 
 if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
-
 
 apt-get purge -y
 apt-get autoremove -y
