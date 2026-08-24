@@ -10,10 +10,9 @@ SAMPLEDEPLOY=false
 SAMPLEWEBAPP=false
 HOSTIP="192.168.63.2"
 PODNETWORK="172.20.0.0/16"
-PAUSE_IMAGE=$(kubeadm config images list | grep pause)
 
-mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
+mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
 
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
@@ -21,7 +20,7 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
 mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup \?= \?false/SystemdCgroup = true/g' /etc/containerd/config.toml
-sed -i "s|sandbox_image = \".*\"|sandbox_image = \"${PAUSE_IMAGE}\"|g" /etc/containerd/config.toml
+sed -i "s|sandbox_image = \".*\"|sandbox_image = \"$(kubeadm config images list | grep pause)\"|g" /etc/containerd/config.toml
 systemctl restart containerd.service && systemctl restart kubelet.service
 
 echo " Images pull for kubeadm"
@@ -53,7 +52,7 @@ sleep 30
 echo " Install Calico"
 curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.32.1/manifests/custom-resources.yaml > /vagrant/calico.yaml
 # Insert pod network CIDR in calico.yaml
-sed -i 's|cidr:.*|cidr: 172.20.0.0/16|g' /vagrant/calico.yaml
+sed -i "s|cidr:.*|cidr: $PODNETWORK|g" /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
 
 echo " Install MetalLB"
@@ -65,8 +64,7 @@ fi
 
 echo " Install Metrics Server"
 if [[ "$INSTALLMETRICS" == true ]]; then
-    curl -fsSL  https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml > /vagrant/components.yaml
-#    wget -q -O /vagrant/components.yaml https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    curl -fsSL https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml > /vagrant/components.yaml
     sed -i 's| - --secure-port=10250| - --secure-port=10250\n        - --kubelet-insecure-tls|' /vagrant/components.yaml
     kubectl apply -f /vagrant/components.yaml
 fi
