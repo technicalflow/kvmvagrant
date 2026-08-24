@@ -1,6 +1,9 @@
 #!/bin/bash
 
 #!/usr/bin/env bash
+
+set -e
+
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8

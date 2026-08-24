@@ -17,7 +17,7 @@ sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.
 systemctl restart containerd.service && systemctl restart kubelet.service
 
 # kubeadm config images pull
-kubeadm config images pull --kubernetes-version v1.32.0
+kubeadm config images pull --kubernetes-version v1.32.13
 
 echo "========================== DONE =========================="
 

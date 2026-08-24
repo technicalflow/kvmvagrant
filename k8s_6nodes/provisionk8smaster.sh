@@ -59,7 +59,7 @@ mkdir -p /home/vagrant/.kube
 mkdir -p /root/.kube
 cp -r /etc/kubernetes/admin.conf /home/vagrant/.kube/config
 cp -r /etc/kubernetes/admin.conf /root/.kube/config
-chown vagrant:vagrant /home/vagrant/.kube/config
+chown -R vagrant:vagrant /home/vagrant/.kube
 
 echo "========================== Export tokens =========================="
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' > /vagrant/ca_cert_hash
@@ -151,7 +151,6 @@ rm -rf /root/.kube
 
 # Provision pods on control plane nodes
 # kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-
 
 # Tigera operator Calico installation
 # # .tigera.io/v1. Installation
