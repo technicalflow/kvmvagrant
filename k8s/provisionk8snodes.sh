@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PAUSE_IMAGE=$(kubeadm config images list | grep pause)
+
 mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
 
@@ -8,9 +10,8 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
 
 mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
 containerd config default > /etc/containerd/config.toml
-
-# sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.toml
 sed -i 's/SystemdCgroup \?= \?false/SystemdCgroup = true/g' /etc/containerd/config.toml
+sed -i "s|sandbox_image = \".*\"|sandbox_image = \"${PAUSE_IMAGE}\"|g" /etc/containerd/config.toml
 
 systemctl restart containerd.service && systemctl restart kubelet.service
 
