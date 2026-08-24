@@ -1,8 +1,7 @@
 ---
 - hosts: all
   vars:
-      username: vmadmin
-
+      username: madmin
   roles:
   - Update
   - EpelRelease
