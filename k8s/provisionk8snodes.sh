@@ -7,8 +7,7 @@ curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | gpg --dearm
 apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
 
 # Metrics server CNI tools
-mkdir -p /usr/lib/cni
-ln -sf /opt/cni/bin/* /usr/lib/cni/
+mkdir -p /usr/lib/cni && ln -s /opt/cni/bin/* /usr/lib/cni/ 2>/dev/null || true
 
 mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
 containerd config default > /etc/containerd/config.toml
