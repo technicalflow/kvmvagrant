@@ -11,6 +11,6 @@
   - CopyConfig
   - Usersconfig
 #  - RestartMachines
-- hosts: debian12
+- hosts: msklad12test01
   roles:
   - Hardening

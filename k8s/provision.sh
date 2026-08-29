@@ -91,3 +91,4 @@ echo provision.sh DONE
 
 # For Debian12 to communicate from LAN network with VM
 # if [ $(hostname) == "k8smaster" ] ; then sed -i '/      address 192.168.50.237/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
+if [ $(hostname) == "k8smaster" ] ; then sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi

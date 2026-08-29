@@ -47,6 +47,7 @@ Vagrant.configure("2") do |config|
     pkg upgrade -y
     pkg install -y mc htop nano bash qemu-guest-agent
     sysrc qemu_guest_agent_enable=YES
+    chsh -s /usr/local/bin/bash vagrant
     uname -a
     ifconfig | grep inet
   SHELL

@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-manager_hostname = "debian12"
+manager_hostname = "msklad12test01"
 image_name = "debian/testing64"
 # image_name = "alvistack/debian-12"
 

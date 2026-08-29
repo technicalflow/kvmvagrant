@@ -70,6 +70,7 @@ snap refresh && snap install microk8s --classic
 
 usermod -aG microk8s $USER
 mkdir -p /home/$USER/.kube
+chown -R $USER:$USER /home/$USER/.kube
 chmod 0700 /home/$USER/.kube
 
 ln -s /snap/bin/microk8s /usr/sbin/microk8s
