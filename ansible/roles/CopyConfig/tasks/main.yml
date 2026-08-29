@@ -16,15 +16,13 @@
       owner: "{{ username }}"
       group: users
     become: yes
-    
+
   - name: Insert SSH public key
     authorized_key:
       user: "{{ username }}"
       state: present
       key: "{{ lookup('file', '../../../ansible.pub') }}"
-      insertafter: EOF
     become: yes
-
 
 # - name: Copy ssh key
 #   shell: cat files/ansible.pub >> /home/vagrant/.ssh/authorized_keys
