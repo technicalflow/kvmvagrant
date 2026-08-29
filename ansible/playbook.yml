@@ -1,12 +1,13 @@
 ---
 - hosts: all
   vars:
-      username: madmin
+    username: madmin
+
   roles:
   - Update
   - EpelRelease
   - PackageInstall
-#  - CopyConfig
+  - CopyConfig
   - Usersconfig
   - CreateUser
 #  - RestartMachines
