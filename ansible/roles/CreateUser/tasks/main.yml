@@ -1,40 +1,75 @@
 ---
-  - name: Add the user
-    become: yes
-    ansible.builtin.user:
-      name: "{{ username }}"
-      # comment: User
-      # uid: 1001
-      group: users
-      state: present
-      createhome: yes
-      shell: /bin/bash
-      password: "{{ 'password' | password_hash('sha512') }}"
+- name: Create user group
+  ansible.builtin.group:
+    name: "{{ username }}"
+    state: present
+  become: yes
 
-  - name: Add the user to the groups
-    ansible.builtin.user:
-      name: "{{ username }}"
-      groups: sudo
-      append: yes
-    become: yes
-    when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+- name: Add the user
+  ansible.builtin.user:
+    name: "{{ username }}"
+    group: "{{ username }}"
+    state: present
+    create_home: yes
+    shell: /bin/bash
+    password: "{{ lookup('community.general.random_string', length=32, special=false) | password_hash('sha512') }}"
+  become: yes
 
-  - name: Touch a file to add sudo entry
-    ansible.builtin.file:
-      path: /etc/sudoers.d/{{ username }}
-      state: touch
-      mode: 0440
-      owner: root
-      group: root
-    become: yes
+- name: Add user to sudo and users groups
+  ansible.builtin.user:
+    name: "{{ username }}"
+    groups: sudo,users
+    append: yes
+  become: yes
+  when: ansible_distribution in ["Ubuntu", "Debian"]
 
-  - name: Add sudo entry
-    become: yes
-    ansible.builtin.lineinfile:
-      path: /etc/sudoers.d/{{ username }}
-      line: "{{ item.line }}"
-    with_items:
-        - { line: '{{ username }} ALL=(ALL) NOPASSWD: ALL' }
+- name: Add passwordless sudo entry
+  ansible.builtin.lineinfile:
+    path: "/etc/sudoers.d/{{ username }}"
+    line: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
+    create: yes
+    mode: '0440'
+    owner: root
+    group: root
+    validate: /usr/sbin/visudo -cf %s
+  become: yes
+
+#   - name: Add the user
+#     become: yes
+#     ansible.builtin.user:
+#       name: "{{ username }}"
+#       # comment: User
+#       # uid: 1001
+#       group: "{{ username }}"
+#       state: present
+#       createhome: yes
+#       shell: /bin/bash
+#       password: "{{ 'password' | password_hash('sha512') }}"
+
+#   - name: Add the user to the groups
+#     ansible.builtin.user:
+#       name: "{{ username }}"
+#       groups: sudo, users
+#       append: yes
+#     become: yes
+#     when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+#   - name: Touch a file to add sudo entry
+#     ansible.builtin.file:
+#       path: /etc/sudoers.d/{{ username }}
+#       state: touch
+#       mode: 0440
+#       owner: root
+#       group: root
+#     become: yes
+
+#   - name: Add sudo entry
+#     become: yes
+#     ansible.builtin.lineinfile:
+#       path: /etc/sudoers.d/{{ username }}
+#       line: "{{ item.line }}"
+#     with_items:
+#         - { line: '{{ username }} ALL=(ALL) NOPASSWD: ALL' }
 
   # - name: Create ssh directory
   #   ansible.builtin.file:
