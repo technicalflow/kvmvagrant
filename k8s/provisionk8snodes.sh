@@ -1,13 +1,18 @@
 #!/bin/bash
 
-mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
+set -e
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+K8S_VERSION="v1.37"
+
+mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$K8S_VERSION/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$K8S_VERSION/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
 
 # Metrics server CNI tools
-mkdir -p /usr/lib/cni && ln -s /opt/cni/bin/* /usr/lib/cni/ 2>/dev/null || true
+# mkdir -p /usr/lib/cni && ln -s /opt/cni/bin/* /usr/lib/cni/ 2>/dev/null || true
+ln -sfn /opt/cni/bin /usr/lib/cni
 
 mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
 containerd config default > /etc/containerd/config.toml
