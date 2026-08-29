@@ -1,5 +1,4 @@
 ---
-tasks:
   - name: Ensure .ssh directory exists
     file:
       path: "/home/{{ username }}/.ssh"
@@ -9,11 +8,21 @@ tasks:
       mode: '0700'
     become: yes
 
+  - name: Touch a file for authorized keys
+    ansible.builtin.file:
+      path: /home/{{ username }}/.ssh/authorized_keys
+      state: touch
+      mode: 0600
+      owner: "{{ username }}"
+      group: users
+    become: yes
+    
   - name: Insert SSH public key
     authorized_key:
       user: "{{ username }}"
       state: present
       key: "{{ lookup('file', '../../../ansible.pub') }}"
+      insertafter: EOF
     become: yes
 
 

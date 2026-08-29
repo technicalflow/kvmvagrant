@@ -7,9 +7,9 @@
   - Update
   - EpelRelease
   - PackageInstall
+  - CreateUser
   - CopyConfig
   - Usersconfig
-  - CreateUser
 #  - RestartMachines
 - hosts: debian12
   roles:
