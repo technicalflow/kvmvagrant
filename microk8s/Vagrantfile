@@ -85,7 +85,7 @@ Vagrant.configure("2") do |config|
 
       if auto
        # i.vm.provision "shell", inline: "microk8s add-node --token $(openssl rand -base64 32) --format short --token-ttl 1200 | grep #{manager_ip} > /vagrant/microk8s.join && sed -i 's|^microk8s join *||' /vagrant/microk8s.join && sed -i 's/$/ --worker/' /vagrant/microk8s.join"
-        i.vm.provision "shell", inline: "microk8s add-node --token $(openssl rand -base64 32) --format short --token-ttl 1200 | grep #{manager_ip} > /vagrant/microk8s.join"
+        i.vm.provision "shell", inline: "microk8s add-node --token $(openssl rand -base64 32 | tr '/' '+' | tr -d '\n') --format short --token-ttl 1200 | grep #{manager_ip} > /vagrant/microk8s.join"
 
       end
 end
