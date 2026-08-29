@@ -7,6 +7,8 @@ export DEBIAN_FRONTEND=noninteractive
 VIP=192.168.67.200
 VIPINTERFACE=eth2
 KUBEVIPVERSION=v0.9.0
+HOSTIP="192.168.67.2"
+PODNETWORK="172.22.0.0/16"
 
 INSTALLHELM=false
 INSTALLMETALLB=false
@@ -47,7 +49,7 @@ sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.con
 
 # Master Configuration
 echo "========================== Kubernetes Master Configuration INIT =========================="
-kubeadm init --pod-network-cidr=172.20.0.0/16 --apiserver-advertise-address=192.168.67.2 --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
+kubeadm init --pod-network-cidr=$PODNETWORK --apiserver-advertise-address=$HOSTIP --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
 # Workaround for kube-vip issue with kubeadm 
@@ -88,7 +90,7 @@ kubectl create -f /vagrant/tigera.yaml
 sleep 5
 curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
 # Insert pod network CIDR in calico.yaml
-sed -i 's|cidr:.*|cidr: 172.20.0.0/16|g' /vagrant/calico.yaml
+sed -i "s|cidr:.*|cidr: $PODNETWORK|g" /vagrant/calico.yaml
 sed -i 's|encapsulation:.*|encapsulation: None|g' /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
 

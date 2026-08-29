@@ -61,6 +61,7 @@ sysctl --system
 # Set proper routing
 sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
 systemctl restart networking.service
+sleep 5
 
 ip a | grep inet
 ip r
@@ -76,6 +77,7 @@ chown -R $USER:$USER /home/$USER/.kube
 chmod 0700 /home/$USER/.kube
 
 ln -s /snap/bin/microk8s /usr/sbin/microk8s
+#/snap/bin/microk8s enable ha-cluster
 
 # openssl rand -hex 16 > /vagrant/token
 

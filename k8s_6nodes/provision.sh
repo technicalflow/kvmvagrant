@@ -23,7 +23,7 @@ apt-get install -y \
     ethtool \
     jq
 
-if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent; fi
+if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent && systemctl enable --now serial-getty@ttyS0.service; fi
 
 apt-get purge -y
 apt-get autoremove -y
@@ -59,6 +59,11 @@ vm.max_map_count=262144
 EOF
 
 sysctl --system
+
+# Set proper routing
+sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
+systemctl restart networking.service
+sleep 5
 
 ip a | grep inet
 echo provision.sh DONE

@@ -3,24 +3,26 @@
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
+K8S_VERSION="v1.32"
 
-echo "========================== Install Kubernetes v1.32 =========================="
+echo "========================== Install Kubernetes $K8S_VERSION =========================="
 mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list 
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$K8S_VERSION/deb/ /" > /etc/apt/sources.list.d/kubernetes.list 
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$K8S_VERSION/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
 
 # Metrics server CNI tools missing fix
-mkdir -p /usr/lib/cni && ln -s /opt/cni/bin/* /usr/lib/cni/ 2>/dev/null || true
+# mkdir -p /usr/lib/cni && ln -s /opt/cni/bin/* /usr/lib/cni/ 2>/dev/null || true
+ln -sfn /opt/cni/bin /usr/lib/cni
 
 mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
 containerd config default > /etc/containerd/config.toml
 sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.toml
 systemctl restart containerd.service && systemctl restart kubelet.service
 
-# kubeadm config images pull
-kubeadm config images pull --kubernetes-version v1.32.13
+kubeadm config images pull
+# kubeadm config images pull --kubernetes-version v1.32.13
 
 echo "========================== DONE =========================="
 

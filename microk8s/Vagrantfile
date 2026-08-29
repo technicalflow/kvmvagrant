@@ -13,12 +13,12 @@ numcpu = 4
 instances = []
 
 (1..numworkers).each do |n|
-  instances.push({:name => "mskladb13mk8s0#{n+1}", :ip => "192.168.65.#{n+2}"})
+  instances.push({:name => "mk8s0#{n+1}", :ip => "192.168.65.#{n+2}"})
 end
 
 # Manager IP and hostname
 manager_ip = "192.168.65.2"
-manager_hostname = "mskladb13mk8s01"
+manager_hostname = "mk8s01"
 
 File.open("./hosts", 'w') { |file|
   file.write("#{manager_ip} #{manager_hostname} #{manager_hostname}\n")
@@ -28,7 +28,7 @@ File.open("./hosts", 'w') { |file|
   }
 
 Vagrant.configure("2") do |config|
-    config.vm.define "mskladb13mk8s01" do |i|
+    config.vm.define "mk8s01" do |i|
       i.vm.provider :libvirt do |libvirt|
         libvirt.cpus = "#{numcpu}"
         libvirt.memory = "#{vmmemory}"
