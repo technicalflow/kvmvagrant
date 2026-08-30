@@ -1,39 +1,51 @@
 ---
-- name: Create user group
+# Role: create_user
+# Creates an administrative user account with SSH key access and passwordless sudo.
+# The username is defined in group_vars/all.yml.
+
+- name: Create user primary group
   ansible.builtin.group:
     name: "{{ username }}"
     state: present
-  become: yes
+  become: true
 
-- name: Add the user
+- name: Create user account
   ansible.builtin.user:
     name: "{{ username }}"
     group: "{{ username }}"
     state: present
-    create_home: yes
+    create_home: true
     shell: /bin/bash
     password: "{{ lookup('community.general.random_string', length=32, special=false) | password_hash('sha512') }}"
-  become: yes
+  become: true
+  no_log: true
 
-- name: Add user to sudo and users groups
+- name: Add user to sudo group (Debian / Ubuntu)
   ansible.builtin.user:
     name: "{{ username }}"
     groups: sudo,users
-    append: yes
-  become: yes
-  when: ansible_distribution in ["Ubuntu", "Debian"]
+    append: true
+  become: true
+  when: ansible_os_family == "Debian"
 
-- name: Add passwordless sudo entry
+- name: Add user to wheel group (RHEL-family)
+  ansible.builtin.user:
+    name: "{{ username }}"
+    groups: wheel
+    append: true
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Configure passwordless sudo
   ansible.builtin.lineinfile:
     path: "/etc/sudoers.d/{{ username }}"
     line: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
-    create: yes
-    mode: '0440'
+    create: true
+    mode: "0440"
     owner: root
     group: root
     validate: /usr/sbin/visudo -cf %s
-  become: yes
-
+  become: true
 #   - name: Add the user
 #     become: yes
 #     ansible.builtin.user:
@@ -71,31 +83,31 @@
 #     with_items:
 #         - { line: '{{ username }} ALL=(ALL) NOPASSWD: ALL' }
 
-  # - name: Create ssh directory
-  #   ansible.builtin.file:
-  #     path: /home/{{ username }}/.ssh
-  #     state: directory
-  #     owner: "{{ username }}"
-  #     group: users
-  #     mode: 0700
-  #   become: yes
+# - name: Create ssh directory
+#   ansible.builtin.file:
+#     path: /home/{{ username }}/.ssh
+#     state: directory
+#     owner: "{{ username }}"
+#     group: users
+#     mode: 0700
+#   become: yes
 
-  # - name: Touch a file for authorized keys
-  #   ansible.builtin.file:
-  #     path: /home/{{ username }}/.ssh/authorized_keys
-  #     state: touch
-  #     mode: 0600
-  #     owner: "{{ username }}"
-  #     group: users
-  #   become: yes
+# - name: Touch a file for authorized keys
+#   ansible.builtin.file:
+#     path: /home/{{ username }}/.ssh/authorized_keys
+#     state: touch
+#     mode: 0600
+#     owner: "{{ username }}"
+#     group: users
+#   become: yes
 
-  # - name: Insert sshkey
-  #   ansible.builtin.blockinfile:
-  #     block: "{{ lookup('file', '../../../ansible.pub') }}"
-  #     dest: /home/{{ username }}/.ssh/authorized_keys
-  #     backup: no
-  #     insertafter: EOF
-  #   become: yes
+# - name: Insert sshkey
+#   ansible.builtin.blockinfile:
+#     block: "{{ lookup('file', '../../../ansible.pub') }}"
+#     dest: /home/{{ username }}/.ssh/authorized_keys
+#     backup: no
+#     insertafter: EOF
+#   become: yes
 
 # Generate password for a user
 # - name: Generate password for new user

@@ -1,0 +1,30 @@
+---
+# Role: users_config
+# Manages the vagrant default user:
+#   - Randomises the vagrant user's password
+#   - Removes the default 'ubuntu' user on Ubuntu systems
+
+- name: Check whether the vagrant user exists
+  ansible.builtin.getent:
+    database: passwd
+    key: vagrant
+    fail_key: false
+  become: true
+  register: vagrant_user_info
+
+- name: Randomise vagrant user password
+  ansible.builtin.user:
+    name: vagrant
+    password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits,punctuation') | password_hash('sha512') }}"
+    update_password: always
+  become: true
+  no_log: true
+  when: vagrant_user_info.ansible_facts.getent_passwd.vagrant is defined
+
+- name: Remove default ubuntu user
+  ansible.builtin.user:
+    name: ubuntu
+    state: absent
+    remove: true
+  become: true
+  when: ansible_distribution == "Ubuntu"

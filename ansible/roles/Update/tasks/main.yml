@@ -1,36 +1,40 @@
-# NOTE01: Be sure to modify your /etc/ansible/hosts file to include your hosts!
-# NOTE02: Be sure to ssh-add private key!
 ---
-# gather_facts: yes
-  - name: Upgrade all installed packages for Debian and Ubuntu
-    apt:
-      name: "*"
-      state: latest
-      update_cache: yes
-      force_apt_get: yes
-      autoclean: yes
-      autoremove: yes
-    become: yes
-    when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+# Role: update
+# Upgrades all installed packages on the target system.
+# Supports: Debian/Ubuntu, CentOS (yum), RHEL/OracleLinux/AlmaLinux (dnf), openSUSE/SLES
 
-  - name: Upgrade all installed packages for CentOS
-    yum:
-      name: '*'
-      state: latest
-    become: yes
-    when: ansible_distribution == "CentOS"
+- name: Upgrade all packages (Debian / Ubuntu)
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+    update_cache: true
+    force_apt_get: true
+    autoclean: true
+    autoremove: true
+  become: true
+  when: ansible_os_family == "Debian"
 
-  - name: Upgrade all installed packages for Oracle or RedHat or Alma Linux
-    dnf:
-      name: '*'
-      state: latest
-    become: yes
-    when: ansible_distribution == "OracleLinux" or ansible_distribution == "RedHat" or ansible_distribution == "AlmaLinux"
-#   when: ansible_facts['os_family'] == 'OracleLinux' and ansible_facts ['distribution_major_version'] == '8'
+- name: Upgrade all packages (CentOS – yum)
+  ansible.builtin.yum:
+    name: "*"
+    state: latest
+  become: true
+  when:
+    - ansible_distribution == "CentOS"
+    - ansible_distribution_major_version | int < 8
 
-  - name: Upgrade all installed packages for openSUSE or SLES
-    zypper:
-      name: '*'
-      state: latest
-    become: yes
-    when: ansible_distribution == "SLES" or ansible_distribution_file_variety == "SUSE"
+- name: Upgrade all packages (RHEL / OracleLinux / AlmaLinux / CentOS 8+)
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+  become: true
+  when: >
+    ansible_distribution in ["OracleLinux", "RedHat", "AlmaLinux", "Rocky"] or
+    (ansible_distribution == "CentOS" and ansible_distribution_major_version | int >= 8)
+
+- name: Upgrade all packages (openSUSE / SLES)
+  community.general.zypper:
+    name: "*"
+    state: latest
+  become: true
+  when: ansible_os_family == "Suse"

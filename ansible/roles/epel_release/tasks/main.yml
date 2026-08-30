@@ -1,0 +1,22 @@
+---
+# Role: epel_release
+# Enables the EPEL repository on Red Hat-family distributions.
+# Supports: CentOS 7 (yum), CentOS 8+ / OracleLinux / AlmaLinux / Rocky (dnf)
+
+- name: Enable EPEL repository (CentOS 7)
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+  become: true
+  when:
+    - ansible_distribution == "CentOS"
+    - ansible_distribution_major_version | int == 7
+
+- name: Enable EPEL repository (CentOS 8+ / OracleLinux / AlmaLinux / Rocky)
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+  become: true
+  when: >
+    (ansible_distribution == "CentOS" and ansible_distribution_major_version | int >= 8) or
+    ansible_distribution in ["OracleLinux", "AlmaLinux", "Rocky"]

@@ -1,1 +1,14 @@
+# Ansible inventory file.
+# Add managed hosts below their group.
+# Example:
+#   [all]
+#   192.168.122.10  ansible_user=vagrant
+#   myserver.local  ansible_user=vagrant ansible_port=2222
+#
+# For Vagrant-based environments the IP/port is typically set per VM.
+
 [all]
+
+# Specific group referenced in playbook for hardening role
+[msklad12test01]
+# msklad12test01  ansible_host=192.168.122.20  ansible_user=vagrant

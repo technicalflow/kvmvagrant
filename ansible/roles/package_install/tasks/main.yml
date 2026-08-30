@@ -1,0 +1,38 @@
+---
+# Role: package_install
+# Installs a common set of utility packages.
+# Package lists are defined in group_vars/all.yml.
+# Supports: Debian/Ubuntu, CentOS (yum), RHEL-family (dnf), openSUSE/SLES
+
+- name: Install packages (Debian / Ubuntu)
+  ansible.builtin.apt:
+    name: "{{ packages_debian }}"
+    state: present
+    update_cache: true
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Install packages (CentOS – yum)
+  ansible.builtin.yum:
+    name: "{{ packages_redhat }}"
+    state: present
+  become: true
+  when:
+    - ansible_distribution == "CentOS"
+    - ansible_distribution_major_version | int < 8
+
+- name: Install packages (RHEL / OracleLinux / AlmaLinux / Rocky / CentOS 8+)
+  ansible.builtin.dnf:
+    name: "{{ packages_redhat }}"
+    state: present
+  become: true
+  when: >
+    ansible_distribution in ["OracleLinux", "RedHat", "AlmaLinux", "Rocky"] or
+    (ansible_distribution == "CentOS" and ansible_distribution_major_version | int >= 8)
+
+- name: Install packages (openSUSE / SLES)
+  community.general.zypper:
+    name: "{{ packages_suse }}"
+    state: present
+  become: true
+  when: ansible_os_family == "Suse"

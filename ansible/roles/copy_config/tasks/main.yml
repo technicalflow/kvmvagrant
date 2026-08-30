@@ -1,0 +1,20 @@
+---
+# Role: copy_config
+# Ensures the managed user's SSH directory exists and installs the authorised public key.
+# The public key file path is defined in group_vars/all.yml (ssh_pub_key_file).
+
+- name: Ensure .ssh directory exists
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0700'
+  become: true
+
+- name: Install SSH authorised key
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ lookup('file', ssh_pub_key_file) }}"
+  become: true

@@ -1,0 +1,14 @@
+---
+# Role: restart_machines
+# Reboots target hosts and waits for them to come back online.
+# Use as the final role in a playbook when a reboot is required.
+
+- name: Reboot host
+  ansible.builtin.reboot:
+    reboot_timeout: 150
+    connect_timeout: 120
+    pre_reboot_delay: 3
+    post_reboot_delay: 20
+    test_command: uptime
+  become: true
+  tags: reboot

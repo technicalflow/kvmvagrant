@@ -1,0 +1,85 @@
+---
+# Variables applied to all hosts.
+# Override per host in host_vars/<hostname>.yml or per group in group_vars/<groupname>.yml.
+
+# ----------------------------------------------------------------------------
+# User Management
+# ----------------------------------------------------------------------------
+
+# The administrative user created/managed across all hosts
+username: madmin
+
+# SSH public key file (relative to the ansible directory) to push to the managed user
+ssh_pub_key_file: "{{ playbook_dir }}/ansible.pub"
+
+# ----------------------------------------------------------------------------
+# Package Lists (customise per distribution as needed)
+# ----------------------------------------------------------------------------
+
+packages_debian:
+  - mc
+  - htop
+  - curl
+  - wget
+
+packages_redhat:
+  - mc
+  - mtr
+  - curl
+  - htop
+  - nano
+  - wget
+
+packages_suse:
+  - curl
+  - htop
+  - nano
+  - git
+
+# ----------------------------------------------------------------------------
+# Timezone
+# ----------------------------------------------------------------------------
+
+# IANA timezone name – override per host in host_vars/<hostname>.yml
+system_timezone: "Europe/Warsaw"
+
+# ----------------------------------------------------------------------------
+# Locale
+# ----------------------------------------------------------------------------
+
+system_locale: "en_US.UTF-8"
+system_language: "en_US:en"
+
+# ----------------------------------------------------------------------------
+# Sysctl Tuning
+# ----------------------------------------------------------------------------
+# Written to /etc/sysctl.d/99-ansible-tuning.conf
+# Add, remove or override entries per host via host_vars/.
+
+sysctl_settings:
+  # General VM / memory
+  - { name: vm.swappiness, value: "10" }
+  - { name: vm.dirty_ratio, value: "15" }
+  - { name: vm.dirty_background_ratio, value: "5" }
+
+  # File descriptor limits
+  - { name: fs.file-max, value: "524288" }
+
+  # Network – general
+  - { name: net.core.somaxconn, value: "1024" }
+  - { name: net.core.netdev_max_backlog, value: "5000" }
+  - { name: net.ipv4.tcp_fin_timeout, value: "15" }
+  - { name: net.ipv4.tcp_keepalive_time, value: "600" }
+  - { name: net.ipv4.tcp_tw_reuse, value: "1" }
+
+  # Enable IP forwarding (required for Docker / containers / routing)
+  - { name: net.ipv4.ip_forward, value: "1" }
+  - { name: net.ipv6.conf.all.forwarding, value: "1" }
+
+  # Security – prevent common attacks
+  - { name: net.ipv4.conf.all.rp_filter, value: "1" }
+  - { name: net.ipv4.conf.default.rp_filter, value: "1" }
+  - { name: net.ipv4.conf.all.accept_redirects, value: "0" }
+  - { name: net.ipv4.conf.all.send_redirects, value: "0" }
+  - { name: net.ipv4.conf.all.accept_source_route, value: "0" }
+  - { name: net.ipv4.icmp_echo_ignore_broadcasts, value: "1" }

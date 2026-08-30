@@ -1,16 +1,28 @@
 ---
-- hosts: all
-  vars:
-    username: madmin
+# Main playbook – applies to all managed hosts.
+# Variables are defined in group_vars/all.yml.
+# Run with: ansible-playbook -i hosts playbook.yml
+
+- name: Base system configuration
+  hosts: all
+  gather_facts: true
+  become: false
 
   roles:
-  - Update
-  - EpelRelease
-  - PackageInstall
-  - CreateUser
-  - CopyConfig
-  - Usersconfig
-#  - RestartMachines
-- hosts: msklad12test01
+    - role: update
+    - role: system
+    - role: epel_release
+    - role: package_install
+    - role: create_user
+    - role: copy_config
+    - role: users_config
+    # Uncomment to reboot hosts after configuration:
+    # - role: restart_machines
+
+- name: Hardening – storage/app servers
+  hosts: msklad12test01
+  gather_facts: true
+  become: false
+
   roles:
-  - Hardening
+    - role: hardening

@@ -1,22 +1,85 @@
 ---
-- name: install packages Ubuntu
-  apt:
-    pkg: ['ufw']
-  become: yes
-  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+# Role: hardening
+# Basic system hardening: UFW firewall + SSH daemon key parameter hardening.
+# Applies to any host this role is assigned to.
 
-# - name: install packages Centos
-#   yum:
-#     name:
-#     - ufw
-#     state: latest
-#   become: yes
-#   when: ansible_distribution == "CentOS"
+# ── UFW Firewall (Debian / Ubuntu) ───────────────────────────────────────────
 
-- name: check ufw status
-  shell: "ufw status"
-  args:
-    executable: /bin/bash
-  become: yes
-  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+- name: Install UFW (Debian / Ubuntu)
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  become: true
+  when: ansible_os_family == "Debian"
 
+- name: Set UFW default incoming policy to deny
+  community.general.ufw:
+    default: deny
+    direction: incoming
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Set UFW default outgoing policy to allow
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Allow SSH through UFW
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Collect UFW status (informational)
+  ansible.builtin.command: ufw status verbose
+  become: true
+  register: ufw_status
+  changed_when: false
+  when: ansible_os_family == "Debian"
+
+- name: Display UFW status
+  ansible.builtin.debug:
+    var: ufw_status.stdout_lines
+  when:
+    - ansible_os_family == "Debian"
+    - ufw_status is defined
+
+# ── SSH Hardening (all distros) ───────────────────────────────────────────────
+# Patches key parameters in the existing sshd_config using lineinfile.
+# No template is used – only the lines below are modified; everything else
+# in the distro's default sshd_config is left untouched.
+
+- name: Harden sshd
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    backup: true
+    validate: /usr/sbin/sshd -t -f %s
+  loop:
+    - {
+        regexp: "^#?PermitRootLogin",
+        line: "PermitRootLogin prohibit-password",
+      }
+    - {
+        regexp: "^#?PasswordAuthentication",
+        line: "PasswordAuthentication yes",
+      }
+    - { regexp: "^#?X11Forwarding", line: "X11Forwarding no" }
+    - { regexp: "^#?MaxAuthTries", line: "MaxAuthTries 3" }
+    - { regexp: "^#?ClientAliveInterval", line: "ClientAliveInterval 300" }
+    - { regexp: "^#?ClientAliveCountMax", line: "ClientAliveCountMax 2" }
+    - { regexp: "^#?PermitEmptyPasswords", line: "PermitEmptyPasswords no" }
+  become: true
+  notify: Restart sshd

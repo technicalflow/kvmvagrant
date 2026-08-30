@@ -1,0 +1,119 @@
+---
+# Role: sysctl_tuning
+# Applies kernel parameter tuning via /etc/sysctl.d/.
+# Parameters are defined in group_vars/all.yml under sysctl_settings.
+
+# - name: Apply sysctl parameters
+#   ansible.posix.sysctl:
+#     name: "{{ item.name }}"
+#     value: "{{ item.value }}"
+#     state: present
+#     sysctl_file: /etc/sysctl.d/99-ansible-tuning.conf
+#     reload: true
+#   loop: "{{ sysctl_settings }}"
+#   become: true
+
+# - name: Confirm sysctl settings applied
+#   ansible.builtin.command: sysctl {{ item.name }}
+#   loop: "{{ sysctl_settings }}"
+#   register: sysctl_verify
+#   changed_when: false
+
+# - name: Show sysctl values
+#   ansible.builtin.debug:
+#     msg: "{{ item.stdout }}"
+#   loop: "{{ sysctl_verify.results }}"
+#   loop_control:
+#     label: "{{ item.item.name }}"
+
+# Role: timezone
+# Sets the system timezone.
+# Variable: system_timezone (defined in group_vars/all.yml)
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ system_timezone }}"
+  become: true
+
+- name: Ensure tzdata is installed (Debian / Ubuntu)
+  ansible.builtin.apt:
+    name: tzdata
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Ensure tzdata is installed (RHEL-family)
+  ansible.builtin.dnf:
+    name: tzdata
+    state: present
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Display current timezone
+  ansible.builtin.command: timedatectl show --property=Timezone --value
+  register: current_tz
+  changed_when: false
+
+- name: Show timezone confirmation
+  ansible.builtin.debug:
+    msg: "Timezone set to: {{ current_tz.stdout }}"
+
+# Role: locale
+# Configures system locale and language settings.
+# Variables: system_locale, system_language (defined in group_vars/all.yml)
+
+# ── Debian / Ubuntu ──────────────────────────────────────────────────────────
+
+- name: Ensure locales package is present (Debian / Ubuntu)
+  ansible.builtin.apt:
+    name: locales
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Generate locale (Debian / Ubuntu)
+  ansible.builtin.locale_gen:
+    name: "{{ system_locale }}"
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Set default locale (Debian / Ubuntu)
+  ansible.builtin.lineinfile:
+    path: /etc/default/locale
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    create: true
+    mode: "0644"
+  loop:
+    - { key: LANG, value: "{{ system_locale }}" }
+    - { key: LANGUAGE, value: "{{ system_language }}" }
+    - { key: LC_ALL, value: "{{ system_locale }}" }
+  become: true
+  when: ansible_os_family == "Debian"
+
+# ── RHEL-family ───────────────────────────────────────────────────────────────
+
+- name: Ensure glibc-langpack is present (RHEL-family)
+  ansible.builtin.dnf:
+    name: "glibc-langpack-{{ system_locale | regex_replace('^([a-z]+)_.*', '\\1') }}"
+    state: present
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Set system locale via localectl (RHEL-family)
+  ansible.builtin.command: localectl set-locale LANG="{{ system_locale }}"
+  become: true
+  changed_when: true
+  when: ansible_os_family == "RedHat"
+
+# ── Confirm ───────────────────────────────────────────────────────────────────
+
+- name: Collect current locale settings
+  ansible.builtin.command: localectl status
+  register: locale_status
+  changed_when: false
+
+- name: Show locale confirmation
+  ansible.builtin.debug:
+    var: locale_status.stdout_lines
