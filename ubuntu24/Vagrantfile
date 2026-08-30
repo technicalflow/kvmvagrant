@@ -1,0 +1,56 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ownubuntu/2404"
+  # config.vm.box = "alvistack/ubuntu-24.04"
+  config.vm.hostname = "msklaub24test01"
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.cpus = 4
+    libvirt.memory = 16284
+    libvirt.nested = true
+    libvirt.driver = "kvm"
+    libvirt.disk_bus = "virtio"
+    libvirt.disk_driver :cache => "writeback"
+    libvirt.machine_type = "q35"
+    libvirt.nic_model_type = "virtio"
+    libvirt.cpu_mode = "host-passthrough"
+    libvirt.video_type = "vga"
+    libvirt.video_vram = 16384
+    libvirt.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+    libvirt.serial :type => "pty"
+  end
+
+#  config.vm.network "public_network", bridge: "enp2s0f0"
+#  config.vm.network :private_network, ip: "192.168.121.190"
+#  config.vm.network :private_network, :ip => "192.168.122.200"
+#  config.vm.network :forwarded_port, guest: 80, host: 8090, host_ip: "0.0.0.0"
+
+  config.vm.network :public_network,
+      :dev => "br0",
+      :mode => "bridge",
+      :type => "bridge",
+      :ip => "192.168.50.230",
+      :netmask => "255.255.254.0",
+      :gateway => "192.168.50.250"
+
+  config.vm.synced_folder ".", "/vagrant",
+    # owner: "vagrant", group: "vagrant"
+        type: "nfs",
+        nfs_version: 4,
+        nfs_udp: false 
+ 
+  config.vm.provision "shell", inline: <<-SHELL
+      swapoff -a
+      sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+      systemctl stop swap.target
+      systemctl enable --now serial-getty@ttyS0.service
+      chmod 600 /etc/netplan/50-vagrant.yaml
+      echo -e '      routes:\n      - to: "default"\n        via: "192.168.50.250"\n      dhcp4: false\n      dhcp6: false'   >> /etc/netplan/50-vagrant.yaml
+      netplan apply
+      cat /etc/os-release
+      ip a | grep inet
+    SHELL
+
+end
