@@ -16,25 +16,14 @@ ssh_pub_key_file: "{{ playbook_dir }}/ansible.pub"
 # Package Lists (customise per distribution as needed)
 # ----------------------------------------------------------------------------
 
-packages_debian:
+packages:
   - mc
   - htop
   - curl
   - wget
-
-packages_redhat:
-  - mc
-  - mtr
-  - curl
-  - htop
-  - nano
-  - wget
-
-packages_suse:
-  - curl
-  - htop
   - nano
   - git
+  
 
 # ----------------------------------------------------------------------------
 # Timezone

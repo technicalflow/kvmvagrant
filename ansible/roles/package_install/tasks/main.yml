@@ -6,7 +6,7 @@
 
 - name: Install packages (Debian / Ubuntu)
   ansible.builtin.apt:
-    name: "{{ packages_debian }}"
+    name: "{{ packages }}"
     state: present
     update_cache: true
   become: true
@@ -14,7 +14,7 @@
 
 - name: Install packages (CentOS – yum)
   ansible.builtin.yum:
-    name: "{{ packages_redhat }}"
+    name: "{{ packages }}"
     state: present
   become: true
   when:
@@ -23,7 +23,7 @@
 
 - name: Install packages (RHEL / OracleLinux / AlmaLinux / Rocky / CentOS 8+)
   ansible.builtin.dnf:
-    name: "{{ packages_redhat }}"
+    name: "{{ packages }}"
     state: present
   become: true
   when: >
@@ -32,7 +32,7 @@
 
 - name: Install packages (openSUSE / SLES)
   community.general.zypper:
-    name: "{{ packages_suse }}"
+    name: "{{ packages }}"
     state: present
   become: true
   when: ansible_os_family == "Suse"
