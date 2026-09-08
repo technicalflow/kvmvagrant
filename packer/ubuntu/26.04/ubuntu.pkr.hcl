@@ -15,25 +15,13 @@ packer {
 
 variable "iso_url" {
   type    = string
-  # default = "/data/ISO/Linux/rhel-10.1-x86_64-dvd.iso"
-  default = "http://ia800503.us.archive.org/3/items/rhel-10.1-x86_64-resources/rhel-10.1-x86_64-dvd.iso"
+  default = "/data/ISO/Linux/ubuntu-26.04-live-server-amd64.iso"
 }
 
 variable "iso_checksum" {
   type    = string
-  default = "5925e05c32d8324a72e146a29293d60707571817769de73df63eab8dbd6d3196"
+  default = "dec49008a71f6098d0bcfc822021f4d042d5f2db279e4d75bdd981304f1ca5d9"
 }
-
-# variable "REDHAT_USERNAME" {
-#   type    = string
-#   default = env("REDHAT_USERNAME")
-# }
-
-# variable "REDHAT_PASSWORD" {
-#   type      = string
-#   default   = env("REDHAT_PASSWORD")
-#   sensitive = true
-# }
 
 variable "ssh_username" {
   type    = string
@@ -63,9 +51,9 @@ variable "memory" {
 
 # ─── Builder ─────────────────────────────────────────────────────────────────
 
-source "qemu" "rhel10" {
-  accelerator  = "kvm"
-  qemu_binary  = "qemu-system-x86_64"
+source "qemu" "ubuntu-26-04" {
+  accelerator = "kvm"
+  qemu_binary = "qemu-system-x86_64"
   qemuargs    = [["-cpu", "host"], ["-machine", "q35,accel=kvm"]]
 
   iso_url      = var.iso_url
@@ -76,21 +64,14 @@ source "qemu" "rhel10" {
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "c<wait5>",
-    "set gfxpayload=keep<enter><wait5>",
-    "linux /images/pxeboot/vmlinuz <wait5>",
-    "inst.stage2=cdrom quite text <wait5>",
-    "net.ifnames=0 biosdevname=0 systemd.unified_cgroup_hierarchy=1 <wait5>",
-    "inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks.cfg <wait5>",
-    "---<enter><wait5>",
-    "initrd /images/pxeboot/initrd.img<enter><wait5>",
+    "c<wait>",
+    "set gfxpayload=keep<enter><wait>",
+    "linux /casper/vmlinuz <wait>",
+    "autoinstall quiet fsck.mode=skip noprompt <wait>",
+    "net.ifnames=0 biosdevname=0 systemd.unified_cgroup_hierarchy=1 <wait>",
+    "ds=\"nocloud-net;s=http://{{.HTTPIP}}:{{.HTTPPort}}/\" <wait>",
+    "---<enter><wait>",
+    "initrd /casper/initrd<enter><wait>",
     "boot<enter>",
   ]
 
@@ -98,59 +79,62 @@ source "qemu" "rhel10" {
   memory    = var.memory
   disk_size = var.disk_size
 
-  disk_cache             = "writeback"
-  disk_compression       = false
-  disk_image             = false
-  disk_interface         = "virtio"
-  format                 = "qcow2"
+  disk_cache       = "writeback"
+  disk_compression = false
+  disk_image       = false
+  disk_interface   = "virtio"
+  format           = "qcow2"
   net_device       = "virtio-net"
-  headless               = true
-  http_directory         = "./"
-  output_directory  = "output-rhel10"
+  headless         = true
+  http_directory   = "${path.root}"
+  output_directory = "output-ubuntu-26-04"
 
   ssh_username           = var.ssh_username
   ssh_password           = var.ssh_password
   ssh_port               = 22
-  ssh_read_write_timeout = "600s"
   ssh_timeout            = "120m"
+  ssh_read_write_timeout = "600s"
+  temporary_key_pair_type = "ed25519"
 
+  shutdown_command = "sudo shutdown -h now"
 
-  shutdown_command       = "sudo shutdown -h now"
-
-  vnc_bind_address       = "0.0.0.0"
-  vnc_port_min           = 5900
-  vnc_port_max           = 6000
+  vnc_bind_address = "0.0.0.0"
+  vnc_port_min     = 5900
+  vnc_port_max     = 6000
 }
 
 # ─── Build ───────────────────────────────────────────────────────────────────
 
 build {
-  sources = ["source.qemu.rhel10"]
+  sources = ["source.qemu.ubuntu-26-04"]
 
-  # provisioner "shell" {
-  #   environment_vars = [
-  #     "REDHAT_USERNAME=${var.REDHAT_USERNAME}",
-  #     "REDHAT_PASSWORD=${var.REDHAT_PASSWORD}",
-  #   ]
-  #   inline = [
-  #     "set -eu",
-  #     "sudo sed -i 's/\\(def in_container():\\)/\\1\\n    return False/g' /usr/lib64/python*/*-packages/rhsm/config.py",
-  #     "sudo subscription-manager register --username=$REDHAT_USERNAME --password=$REDHAT_PASSWORD",
-  #     "echo 'zchunk=False' | sudo tee -a /etc/dnf/dnf.conf",
-  #     "sudo yum makecache",
-  #     "sudo yum update -y redhat-release",
-  #     "sudo yum makecache",
-  #     "sudo yum update -y",
-  #     "sudo yum install -y --allowerasing ca-certificates curl gcc glibc-common glibc-langpack-en gnupg2 hostname iproute python3 sequoia-sq sudo yum-utils",
-  #     "sudo yum install -y --allowerasing coreutils curl",
-  #     "sudo yum install -y qemu-guest-agent",
-  #   ]
-  # }
+  # Provisioner 1: System upgrade + base packages
+  provisioner "shell" {
+    inline = [
+      "set -eu",
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge usbmuxd usb-modeswitch* modemmanager open-vm-tools -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get autoremove -y",
+    ]
+  }
 
+  # Provisioner 2: Configure APT sources (DEB822 format)
+  provisioner "shell" {
+    inline = [
+      "set -eu",
+      "sudo rm -rf /etc/apt/sources.list*",
+      "sudo mkdir -p /etc/apt/sources.list.d",
+      "printf 'Components: main universe restricted multiverse\\nEnabled: yes\\nX-Repolib-Name: ubuntu\\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\\nSuites: resolute resolute-updates resolute-backports\\nTypes: deb\\nURIs: http://archive.ubuntu.com/ubuntu\\n' | sudo tee /etc/apt/sources.list.d/ubuntu.sources > /dev/null",
+      "printf 'Components: main universe restricted multiverse\\nEnabled: yes\\nX-Repolib-Name: ubuntu-security\\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\\nSuites: resolute-security\\nTypes: deb\\nURIs: http://security.ubuntu.com/ubuntu\\n' | sudo tee /etc/apt/sources.list.d/ubuntu-security.sources > /dev/null",
+    ]
+  }
+
+  # Post-processor 1: Image cleanup and sysprep
   post-processor "shell-local" {
     inline = [
       "set -eu",
-      "export _IMAGE=\"output-rhel10/packer-rhel10\"",
+      "export _IMAGE=\"output-ubuntu-26-04/packer-ubuntu-26-04\"",
       "export LIBGUESTFS_BACKEND=direct",
       "sudo qemu-img convert -f qcow2 -O qcow2 \"$_IMAGE\" \"$_IMAGE.convert\" && sudo rm -rf \"$_IMAGE\"",
       "sudo chmod a+r /boot/vmlinuz*",
@@ -162,6 +146,7 @@ build {
     ]
   }
 
+  # Post-processor 2: Package as Vagrant box
   post-processor "vagrant" {
     compression_level   = 9
     keep_input_artifact = true

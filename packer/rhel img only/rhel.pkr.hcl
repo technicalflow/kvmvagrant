@@ -4,10 +4,10 @@ packer {
       source  = "github.com/hashicorp/qemu"
       version = ">= 1.0.0"
     }
-    vagrant = {
-      source  = "github.com/hashicorp/vagrant"
-      version = ">= 1.0.0"
-    }
+    # vagrant = {
+    #   source  = "github.com/hashicorp/vagrant"
+    #   version = ">= 1.0.0"
+    # }
   }
 }
 
@@ -66,18 +66,13 @@ variable "memory" {
 source "qemu" "rhel10" {
   accelerator  = "kvm"
   qemu_binary  = "qemu-system-x86_64"
-  qemuargs    = [["-cpu", "host"], ["-machine", "q35,accel=kvm"]]
+  qemuargs     = [["-cpu", "host"], ["-machine", "q35,accel=kvm"]]
 
   iso_url      = var.iso_url
   iso_checksum = var.iso_checksum
 
   boot_wait = "1s"
   boot_command = [
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
@@ -108,11 +103,11 @@ source "qemu" "rhel10" {
   http_directory         = "./"
   output_directory  = "output-rhel10"
 
-  ssh_username           = var.ssh_username
-  ssh_password           = var.ssh_password
-  ssh_port               = 22
-  ssh_read_write_timeout = "600s"
-  ssh_timeout            = "120m"
+  # ssh_username           = var.ssh_username
+  # ssh_password           = var.ssh_password
+  # ssh_port               = 22
+  # ssh_read_write_timeout = "600s"
+  # ssh_timeout            = "120m"
 
 
   shutdown_command       = "sudo shutdown -h now"
@@ -162,10 +157,10 @@ build {
     ]
   }
 
-  post-processor "vagrant" {
-    compression_level   = 9
-    keep_input_artifact = true
-    output              = "output-vagrant/package.box"
-    provider_override   = "libvirt"
-  }
+  # post-processor "vagrant" {
+  #   compression_level   = 9
+  #   keep_input_artifact = true
+  #   output              = "output-vagrant/package.box"
+  #   provider_override   = "libvirt"
+  # }
 }

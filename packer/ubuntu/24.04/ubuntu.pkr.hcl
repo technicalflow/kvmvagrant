@@ -55,7 +55,7 @@ variable "memory" {
 source "qemu" "ubuntu-24-04" {
   accelerator  = "kvm"
   qemu_binary  = "qemu-system-x86_64"
-  qemuargs     = [["-cpu", "host"]]
+  qemuargs    = [["-cpu", "host"], ["-machine", "q35,accel=kvm"]]
 
   iso_url      = var.iso_url
   iso_checksum = var.iso_checksum
@@ -65,21 +65,14 @@ source "qemu" "ubuntu-24-04" {
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
     "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "<tab><tab><tab><tab><tab><tab><tab><tab><tab><tab><wait>",
-    "c<wait5>",
-    "set gfxpayload=keep<enter><wait5>",
-    "linux /casper/vmlinuz <wait5>",
-    "autoinstall quiet fsck.mode=skip noprompt <wait5>",
-    "net.ifnames=0 biosdevname=0 systemd.unified_cgroup_hierarchy=1 <wait5>",
-    "ds=\"nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/\" <wait5>",
-    "---<enter><wait5>",
-    "initrd /casper/initrd<enter><wait5>",
+    "c<wait>",
+    "set gfxpayload=keep<enter><wait>",
+    "linux /casper/vmlinuz <wait>",
+    "autoinstall quiet fsck.mode=skip noprompt <wait>",
+    "net.ifnames=0 biosdevname=0 systemd.unified_cgroup_hierarchy=1 <wait>",
+    "ds=\"nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/\" <wait>",
+    "---<enter><wait>",
+    "initrd /casper/initrd<enter><wait>",
     "boot<enter>",
   ]
 
@@ -102,6 +95,7 @@ source "qemu" "ubuntu-24-04" {
   ssh_port               = 22
   ssh_timeout            = "120m"
   ssh_read_write_timeout = "600s"
+  temporary_key_pair_type = "ed25519"
 
   shutdown_command = "sudo shutdown -h now"
 
