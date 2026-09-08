@@ -15,13 +15,11 @@ packer {
 
 variable "iso_url" {
   type    = string
-#  default = "/data/ISO/Linux/debian-13.6.0-amd64-DVD-1.iso"
   default = "/data/ISO/Linux/debian-13.6.0-amd64-netinst.iso"
 }
 
 variable "iso_checksum" {
   type    = string
-#  default = "e97736b7f49af22497c8df95e381ea5025faf3575af4b7ca6d5f40971265364e"
   default = "65273beed27b2df543b68b65630ba525cfbad8df2b12035732b2dff87d6664e7"
 }
 
