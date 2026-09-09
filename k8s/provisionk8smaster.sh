@@ -10,30 +10,7 @@ SAMPLEDEPLOY=false
 SAMPLEWEBAPP=false
 HOSTIP="192.168.63.2"
 PODNETWORK="172.20.0.0/16"
-K8S_VERSION="v1.37"
 
-mkdir -p /etc/apt/keyrings && touch /etc/apt/sources.list.d/kubernetes.list
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$K8S_VERSION/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
-
-curl -fsSL https://pkgs.k8s.io/core:/stable:/$K8S_VERSION/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-apt-get update && apt-get install -y kubelet kubeadm kubectl containerd socat
-
-# Metrics server CNI tools
-# mkdir -p /usr/lib/cni && ln -s /opt/cni/bin/* /usr/lib/cni/ 2>/dev/null || true
-ln -sfn /opt/cni/bin /usr/lib/cni
-
-# [ -e /usr/lib/cni ] || ln -s /opt/cni/bin /usr/lib/cni
-
-mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
-containerd config default > /etc/containerd/config.toml
-sed -i 's/SystemdCgroup \?= \?false/SystemdCgroup = true/g' /etc/containerd/config.toml
-sed -i "s|sandbox_image = \".*\"|sandbox_image = \"$(kubeadm config images list | grep pause)\"|g" /etc/containerd/config.toml
-systemctl restart containerd.service && systemctl restart kubelet.service
-
-echo " Images pull for kubeadm"
-kubeadm config images pull
-
-# Master Configuration
 echo " Kubernetes Master Configuration INIT"
 kubeadm init --pod-network-cidr=$PODNETWORK --apiserver-advertise-address=$HOSTIP --node-name=k8smaster
 
@@ -87,6 +64,7 @@ if [[ "$INSTALLHELM" == true ]]; then
     # helm install nginx-ingress stable/nginx-ingress
 fi
 
+echo " Install Ingress Controller"
 if [[ "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     helm template ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version 4.11.3 --namespace ingress-nginx > /vagrant/ingress.yaml
