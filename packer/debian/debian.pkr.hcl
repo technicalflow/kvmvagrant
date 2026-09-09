@@ -56,6 +56,7 @@ source "qemu" "debian-13" {
   qemu_binary = "qemu-system-x86_64"
   qemuargs    = [["-cpu", "host"], ["-machine", "q35,accel=kvm"]]
 
+  vm_name      = "packer-debian-13"
   iso_url      = var.iso_url
   iso_checksum = var.iso_checksum
 
@@ -71,7 +72,7 @@ source "qemu" "debian-13" {
     "debconf/priority=critical <wait> ", 
     "console-setup/ask_detect=false <wait> ",
     "debconf/frontend=noninteractive <wait> ",
-    "net.ifnames=0 biosdevname=0 systemd.unified_cgroup_hierarchy=1 <wait>",
+    "net.ifnames=0 biosdevname=0 systemd.unified_cgroup_hierarchy=1 <wait> ",
     "preseed/url=http://{{.HTTPIP}}:{{.HTTPPort}}/preseed.cfg <wait> ",
     "---<enter>",
   ]
