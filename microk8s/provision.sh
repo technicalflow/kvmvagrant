@@ -88,10 +88,10 @@ ln -s /snap/bin/microk8s /usr/sbin/microk8s
 # openssl rand -hex 16 > /vagrant/token
 
 # MicroCeph Cluster
-modprobe rbd
-snap install microceph --channel=latest/edge
-ln -s /snap/bin/microceph /usr/sbin/microceph
-ln -s /snap/bin/ceph /usr/sbin/ceph
+# modprobe rbd
+# snap install microceph --channel=latest/edge
+# ln -s /snap/bin/microceph /usr/sbin/microceph
+# ln -s /snap/bin/ceph /usr/sbin/ceph
 
 # printf "g\nw\n" | fdisk /dev/vdb
 
