@@ -31,7 +31,7 @@ Vagrant.configure("2") do |config|
         # i.vm.network :private_network,
         #   :type => "dhcp"
         
-        i.vm.provision "shell", path: "./provision-manager.sh"
+        # i.vm.provision "shell", path: "./provision-manager.sh"
     end
 
     instances.each do |instance|
@@ -45,7 +45,7 @@ Vagrant.configure("2") do |config|
             i.vm.box = "hashicorp/bionic64"
             i.vm.hostname = instance[:name]
             i.vm.network "private_network", ip: "#{instance[:ip]}"
-            i.vm.provision "shell", path: "./provision.sh"
+            # i.vm.provision "shell", path: "./provision.sh"
         end
     end
 end

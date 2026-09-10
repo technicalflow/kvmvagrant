@@ -145,6 +145,7 @@ instances.each do |instance|
       end
 
       i.vm.provision "shell", path: "./provision.sh", run: "once"
+      i.vm.provision "shell", inline: 'until [ -s /vagrant/microk8s.join ]; do echo "Waiting for K8S Join token"; sleep 5; done'
 
       if auto
         i.vm.provision "shell", inline: "$(cat /vagrant/microk8s.join) --worker && sleep 5", run: "once"

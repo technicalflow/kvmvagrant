@@ -15,7 +15,7 @@ tee /etc/apt/sources.list.d/docker.sources <<EOF
 Types: deb
 URIs: https://download.docker.com/linux/debian
 # Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
-Suites: trixie
+Suites: $(lsb_release -cs)
 Components: stable
 Architectures: amd64
 Signed-By: /etc/apt/keyrings/docker.asc

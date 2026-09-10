@@ -60,10 +60,13 @@ EOF
 
 sysctl --system
 
-# Set proper routing
-sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
-systemctl restart networking.service
-sleep 5
+# Set routing
+if [ "$(. /etc/os-release && printf '%s' "$ID")" = "debian" ]; then
+    sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
+    systemctl restart networking.service
+fi
+
+sleep 1
 
 ip a | grep inet
 echo provision.sh DONE

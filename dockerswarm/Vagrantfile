@@ -151,7 +151,8 @@ instances.each do |instance|
       end
 
       i.vm.provision "shell", path: "./provisionfull.sh"
-      i.vm.provision "shell", inline: "sleep 10"
+      # If you forgot about vagrant up --no-parallel
+      i.vm.provision "shell", inline: 'until [ -s /vagrant/token ]; do echo "Waiting for Swarm token"; sleep 5; done'
       i.vm.provision "shell", path: "./provisiondockerapt.sh"
 
       if auto

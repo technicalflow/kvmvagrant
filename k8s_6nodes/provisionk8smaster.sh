@@ -76,8 +76,9 @@ kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/
 # export KUBECONFIG=/etc/kubernetes/admin.conf
 # chmod 755 /etc/kubernetes/admin.conf
 # Wait for kube-apiserver VIP to be ready
-echo "========================== Sleep 80 seconds waiting for Kube-VIP IP =========================="
-sleep 80
+echo "========================== Waiting for Kube-VIP IP =========================="
+sleep 5
+until [ "$(curl -k -s -o /dev/null -w "%{http_code}" https://$VIP:6443/healthz 2>/dev/null || true)" = "200" ]; do echo "Waiting for Kube-VIP "; sleep 5; done
 
 # while [ "$(curl -k -s -o /dev/null -w "%{http_code}" https://$VIP:6443)" != "403" ]; do
 #     echo 'sleep 5' && sleep 5

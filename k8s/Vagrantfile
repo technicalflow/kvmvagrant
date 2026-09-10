@@ -146,8 +146,8 @@ instances.each do |instance|
       i.vm.provision "shell", path: "./provision.sh", run: "once"
 
      # If you forgot about vagrant up --no-parallel
-      i.vm.provision "shell", inline: "sleep 10"
- 
+      i.vm.provision "shell", inline: 'until [ -s /vagrant/kubeadm_join ]; do echo "Waiting for K8S Join token"; sleep 5; done' 
+      
       if auto
         i.vm.provision "shell", path: "./provisionk8s.sh", run: "once"
         i.vm.provision "shell", inline: "kubeadm join #{manager_ip}:6443 --token $(cat /vagrant/kubeadm_join) --discovery-token-ca-cert-hash sha256:$(cat /vagrant/ca_cert_hash)"
