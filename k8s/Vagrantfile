@@ -8,7 +8,7 @@ auto = ENV['AUTO_START_K8S'] || true
 numworkers = 2
 
 # Master memory and CPU configuration
-vmmemory = 2048
+vmmemory = 4096
 numcpu = 4
 
 instances = []

@@ -59,8 +59,10 @@ EOF
 sysctl --system
 
 # Set proper routing
-sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
-systemctl restart networking.service
+if [ "$(. /etc/os-release && printf '%s' "$ID")" = "debian" ]; then
+    sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
+    systemctl restart networking.service
+fi
 sleep 5
 
 ip a | grep inet
@@ -69,7 +71,8 @@ ip r
 #Install microk8s
 apt-get update && apt-get install -y snapd
 systemctl enable --now snapd.service
-snap refresh && snap install microk8s --classic
+sleep 1 && snap refresh
+snap install microk8s --channel=1.36/stable --classic
 
 usermod -aG microk8s $USER
 mkdir -p /home/$USER/.kube
@@ -77,9 +80,20 @@ chown -R $USER:$USER /home/$USER/.kube
 chmod 0700 /home/$USER/.kube
 
 ln -s /snap/bin/microk8s /usr/sbin/microk8s
+
 #/snap/bin/microk8s enable ha-cluster
 
+# microk8s status --wait-ready
+
 # openssl rand -hex 16 > /vagrant/token
+
+# MicroCeph Cluster
+modprobe rbd
+snap install microceph --channel=latest/edge
+ln -s /snap/bin/microceph /usr/sbin/microceph
+ln -s /snap/bin/ceph /usr/sbin/ceph
+
+# printf "g\nw\n" | fdisk /dev/vdb
 
 echo DONE
 
@@ -87,3 +101,22 @@ echo DONE
 # if [ "$(hostname)" == "k8sm1" ] ; then sed -i '/      address 192.168.50.238/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
 # if [ "$(hostname)" == "k8sm2" ] ; then sed -i '/      address 192.168.50.239/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
 # if [ "$(hostname)" == "k8sm3" ] ; then sed -i '/      address 192.168.50.240/a\      gateway 192.168.50.250\n      up ip addr add 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10\n      down ip addr del 192.168.50.0/24 dev $IFACE label $IFACE:0 metric 10' /etc/network/interfaces && systemctl restart networking.service && sleep 5; fi
+
+# MicroCeph Cluster
+#Master
+# microceph cluster bootstrap --microceph-ip #{manager_ip} --cluster-network #{address_space} --public-network #{address_space}
+# microceph cluster add mk8s02 > /vagrant/mk8s02 && microceph cluster add mk8s03 > /vagrant/mk8s03
+# microceph disk add /dev/vdb --wipe
+
+# Later on Master
+# ceph mgr module enable prometheus
+# microk8s enable rook-ceph
+# microk8s connect-external-ceph
+
+# Nodes
+# microceph cluster join $(cat /vagrant/mk8s02) --microceph-ip 192.168.65.3
+# microceph cluster join $(cat /vagrant/mk8s03) --microceph-ip 192.168.65.4
+# microceph disk add /dev/vdb --wipe
+
+# if [ $(hostname) == "mk8s02" ] ; then microceph cluster join $(cat /vagrant/mk8s02) --microceph-ip 192.168.65.3; fi
+# if [ $(hostname) == "mk8s03" ] ; then microceph cluster join $(cat /vagrant/mk8s03) --microceph-ip 192.168.65.4; fi

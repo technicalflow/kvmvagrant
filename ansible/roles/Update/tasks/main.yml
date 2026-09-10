@@ -3,6 +3,16 @@
 # Upgrades all installed packages on the target system.
 # Supports: Debian/Ubuntu, CentOS (yum), RHEL/OracleLinux/AlmaLinux (dnf), openSUSE/SLES
 
+- name: Force APT to use IPv4 (Debian / Ubuntu)
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99force-ipv4
+    content: 'Acquire::ForceIPv4 "true";'
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when: ansible_os_family == "Debian"
+
 - name: Upgrade all packages (Debian / Ubuntu)
   ansible.builtin.apt:
     name: "*"
