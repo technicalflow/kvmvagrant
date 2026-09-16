@@ -1,0 +1,27 @@
+---
+- name: Ensure the packeges are installed
+  become: true
+  hosts: all
+
+  tasks:
+    - name: Install Oracle EPEL repository
+      ansible.builtin.dnf:
+        name: oracle-epel-release-el9
+        state: present
+      retries: 5
+      delay: 10
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Install packages
+      ansible.builtin.dnf:
+        name:
+          - tzdata
+          - mc
+          - htop
+          - curl
+          - wget
+          - nano
+          - git
+          - dnf-utils
+        state: present
+      when: ansible_distribution == "OracleLinux"

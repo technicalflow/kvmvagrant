@@ -1,0 +1,47 @@
+---
+# Copyright (c) 2024 Oracle and/or its affiliates.
+# This software is made available to you under the terms of the Universal Permissive License (UPL), Version 1.0.
+# The Universal Permissive License (UPL), Version 1.0 (see COPYING or https://oss.oracle.com/licenses/upl)
+# See LICENSE.TXT for details.
+
+- name: Setup freeipa server using a role
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - default_vars.yml
+  vars:
+    ipaserver_domain: "{{ ipa_custom_domain }}"
+    ipaserver_realm: "{{ ipa_custom_domain|upper }}"
+    ipaserver_setup_dns: false
+    ipaadmin_password: "{{ ipa_admin_password }}"
+    ipadm_password: "{{ ipa_dm_password }}"
+    ansible_python_interpreter: /usr/bin/python3
+
+  pre_tasks:
+    - name: Ensure freeipa-server is installed
+      ansible.builtin.package:
+        name: freeipa-server
+        state: present
+
+    - name: Ensure server IP and FQDN are in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^{{ ansible_eth1.ipv4.address }}\s+'
+        line: "{{ ansible_eth1.ipv4.address }} {{ ansible_hostname }}.{{ ipa_custom_domain }} {{ ansible_hostname }}"
+        state: present
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ ansible_hostname }}.{{ ipa_custom_domain }}"
+        use: systemd
+
+    - name: Reset connection to apply changes to subsequent tasks
+      ansible.builtin.meta: reset_connection
+
+    - name: Re-gather facts with updated hostname
+      ansible.builtin.setup:
+
+  roles:
+    - role: freeipa.ansible_freeipa.ipaserver
+      state: present

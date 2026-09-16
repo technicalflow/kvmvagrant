@@ -1,0 +1,418 @@
+---
+# Copyright (c) 2024, 2025 Oracle and/or its affiliates.
+# This software is made available to you under the terms of the Universal Permissive License (UPL), Version 1.0.
+# The Universal Permissive License (UPL), Version 1.0 (see COPYING or https://oss.oracle.com/licenses/upl)
+# See LICENSE.TXT for details.
+
+- name: Install a single node OLAM server
+  hosts: all
+  vars_files:
+    - default_vars.yml
+  gather_facts: true
+  vars:
+    control_node_ip: "{{ hostvars[inventory_hostname]['ansible_eth1']['ipv4']['address'] | default(ansible_eth1.ipv4.address) }}"
+  become: true
+
+  tasks:
+    # Already added to install_packages.yml
+    # - name: Install Oracle EPEL repository
+    #   ansible.builtin.dnf:
+    #     name: oracle-epel-release-el9
+    #     state: present
+    #   retries: 5
+    #   delay: 10
+    #   when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Install version lock plugin
+      ansible.builtin.dnf:
+        name: python3-dnf-plugin-versionlock
+        enablerepo: ol9_developer_EPEL
+        state: present
+      retries: 5
+      delay: 10
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Install additional packages for ansible
+      ansible.builtin.dnf:
+        name:
+          - python3-psycopg2
+          - python3-pyOpenSSL
+          - python3-pip
+        enablerepo: ol9_developer_EPEL
+        state: present
+      retries: 5
+      delay: 10
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Install pexpect using pip
+      ansible.builtin.pip:
+        name: pexpect
+
+    # Install database
+
+    - name: Enable the PostgreSQL 16 module stream
+      ansible.builtin.copy:
+        dest: /etc/dnf/modules.d/postgresql.module
+        content: |
+          [postgresql]
+          name=postgresql
+          stream=16
+          profiles=
+          state=enabled
+        mode: "0644"
+
+    - name: Install the database
+      ansible.builtin.dnf:
+        name: postgresql-server
+        state: present
+      retries: 5
+      delay: 10
+
+    - name: Ensure postgresql data directory exists
+      ansible.builtin.file:
+        path: "/var/lib/pgsql/data"
+        owner: "postgres"
+        group: "postgres"
+        state: directory
+        mode: "0700"
+
+    # Handle the ol-automation-manager-DB-init.sh script
+
+    - name: Check if postgresql is initialized
+      ansible.builtin.stat:
+        path: "/var/lib/pgsql/data/PG_VERSION"
+      register: pgdata_dir_version
+
+    - name: Initialize postgresql database
+      ansible.builtin.command: "postgresql-setup --initdb"
+      when: not pgdata_dir_version.stat.exists
+      become: true
+      become_user: postgres
+      register: dbsetup_result
+      changed_when: dbsetup_result.rc == 0
+
+    - name: Change database password storage encryption
+      ansible.builtin.replace:
+        path: /var/lib/pgsql/data/postgresql.conf
+        regexp: "^#password_encryption.*"
+        replace: "password_encryption = scram-sha-256"
+
+    - name: Enable and start postgresql.service
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+        enabled: true
+
+    - name: Create awx postgresql user
+      community.postgresql.postgresql_user:
+        name: awx
+        password: "{{ awx_pguser_password }}"
+        role_attr_flags: NOSUPERUSER
+      become: true
+      become_user: postgres
+
+    - name: Create awx postgresql db
+      community.postgresql.postgresql_db:
+        name: awx
+        owner: awx
+      become: true
+      become_user: postgres
+
+    - name: Update host-based authentication
+      ansible.builtin.lineinfile:
+        path: /var/lib/pgsql/data/pg_hba.conf
+        line: "host  all  all 0.0.0.0/0 scram-sha-256"
+
+    - name: Set the database listening address
+      ansible.builtin.lineinfile:
+        path: /var/lib/pgsql/data/postgresql.conf
+        insertbefore: "^#port = 5432"
+        line: "listen_addresses = '{{ control_node_ip }}'"
+
+    - name: Restart the database
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted
+
+    # Install Single-Host OLAM v2
+
+    - name: Install Oracle Linux Automation Manager repository
+      ansible.builtin.dnf:
+        name: oraclelinux-automation-manager-release-el9
+        state: present
+      retries: 5
+      delay: 10
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Enable Oracle Linux Automation Manager 2.3 repository
+      community.general.ini_file:
+        path: "/etc/yum.repos.d/oraclelinux-automation-manager-ol9.repo"
+        section: ol9_automation2.3
+        option: enabled
+        value: "1"
+        mode: "0644"
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Install Oracle Linux Automation Manager
+      ansible.builtin.dnf:
+        name: ol-automation-manager
+        state: present
+        disablerepo: "ol9_developer_EPEL"
+      retries: 5
+      delay: 10
+
+    - name: Edit unixsocket in /etc/redis/redis.conf
+      ansible.builtin.lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: "^unixsocket "
+        insertafter: "^# unixsocketperm "
+        line: unixsocket /var/run/redis/redis.sock
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Edit unixsocketperm in /etc/redis/redis.conf
+      ansible.builtin.lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: "^unixsocketperm "
+        insertafter: "^unixsocket "
+        line: unixsocketperm 775
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Configure CLUSTER_HOST_ID setting
+      ansible.builtin.copy:
+        dest: /etc/tower/conf.d/olam.py
+        content: |
+          CLUSTER_HOST_ID = "{{ control_node_ip }}"
+        owner: awx
+        group: awx
+        mode: "0640"
+
+    - name: Configure DATABASE settings
+      ansible.builtin.copy:
+        dest: /etc/tower/conf.d/db.py
+        content: |
+          DATABASES = {
+              'default': {
+                  'ATOMIC_REQUESTS': True,
+                  'ENGINE': 'awx.main.db.profiled_pg',
+                  'NAME': 'awx',
+                  'USER': 'awx',
+                  'PASSWORD': '{{ awx_pguser_password }}',
+                  'HOST': '{{ control_node_ip }}',
+                  'PORT': '5432',
+              }
+          }
+        owner: awx
+        group: awx
+        mode: "0640"
+
+    - name: Provision olam ansible container environment # noqa: syntax-check[unknown-module]
+      containers.podman.podman_image:
+        name: container-registry.oracle.com/oracle_linux_automation_manager/olam-ee
+        tag: 2.3-ol9
+      become: true
+      become_user: awx
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Check if awx provisioned
+      ansible.builtin.stat:
+        path: /var/lib/awx/.awx-provisioned
+      register: awx_provision
+
+    - name: Run awx-manage
+      ansible.builtin.shell: |
+        awx-manage migrate
+        awx-manage provision_instance --hostname={{ control_node_ip }} --node_type=hybrid
+        awx-manage register_default_execution_environments
+        awx-manage register_queue --queuename=default --hostnames={{ control_node_ip }}
+        awx-manage register_queue --queuename=controlplane --hostnames={{ control_node_ip }}
+        awx-manage create_preload_data
+        touch /var/lib/awx/.awx-provisioned
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: awx
+      register: awx_migrate
+      when: not awx_provision.stat.exists
+      changed_when: awx_migrate is not search('already exists')
+
+    - name: Set awx password
+      ansible.builtin.expect:
+        command: "awx-manage createsuperuser --username {{ olam_admin_user }} --email {{ olam_admin_email }}"
+        responses:
+          "Password:": "{{ olam_admin_password }}"
+          'Password \(again\):': "{{ olam_admin_password }}"
+      register: awx_password
+      become: true
+      become_user: awx
+      ignore_errors: true
+      changed_when: awx_password.stdout is not search('is already taken')
+
+    - name: Print the AWX admin password
+      ansible.builtin.debug:
+        var: awx_password
+      when: debug_enabled
+
+    - name: Generate an OpenSSL private key with a different size (2048 bits)
+      community.crypto.openssl_privatekey:
+        path: /etc/tower/tower.key
+        size: 2048
+
+    - name: Generate an OpenSSL Certificate Signing Request
+      community.crypto.openssl_csr:
+        path: /etc/tower/tower.csr
+        privatekey_path: /etc/tower/tower.key
+
+    - name: Generate a Self Signed OpenSSL certificate
+      community.crypto.x509_certificate:
+        path: /etc/tower/tower.crt
+        privatekey_path: /etc/tower/tower.key
+        csr_path: /etc/tower/tower.csr
+        provider: selfsigned
+
+    - name: Remove default server section in nginx configuration
+      ansible.builtin.copy:
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          user nginx;
+          worker_processes auto;
+          error_log /var/log/nginx/error.log;
+          pid /run/nginx.pid;
+
+          include /usr/share/nginx/modules/*.conf;
+
+          events {
+              worker_connections 1024;
+          }
+
+          http {
+              log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                                '$status $body_bytes_sent "$http_referer" '
+                                '"$http_user_agent" "$http_x_forwarded_for"';
+
+              access_log  /var/log/nginx/access.log  main;
+
+              sendfile            on;
+              tcp_nopush          on;
+              tcp_nodelay         on;
+              keepalive_timeout   65;
+              types_hash_max_size 2048;
+
+              include             /etc/nginx/mime.types;
+              default_type        application/octet-stream;
+
+              include /etc/nginx/conf.d/*.conf;
+
+          {% if use_haproxy %}
+              server {
+                  listen      8080 default_server;
+                  listen      [::]:8080 default_server;
+                  server_name _;
+                  root        /usr/share/nginx/html;
+
+                  include /etc/nginx/default.d/*.conf;
+
+                  location /nginx-health {
+                      access_log off;
+                      add_header 'Content-Type' 'text/plain';
+                      return 200 "healthy\n";
+                  }
+
+                  location /health {
+                      access_log off;
+                      add_header 'Content-Type' 'application/json';
+                      return 200 '{"status":"UP"}';
+                  }
+              }
+          {% endif %}
+          }
+
+    # Enable for using FreeIpa together with OLAM
+    # - name: Change OLAM Nginx ports from 80/443 to 8080/8443
+    #   ansible.builtin.shell: |
+    #     sed -i -E \
+    #       -e 's/listen\s+80(\s|;)/listen 8080\1/g' \
+    #       -e 's/listen\s+127\.0\.0\.1:80(\s|;)/listen 127.0.0.1:8080\1/g' \
+    #       -e 's/listen\s+443(\s|;)/listen 8443\1/g' \
+    #       -e 's/listen\s+\[::\]:80(\s|;)/listen [::]:8080\1/g' \
+    #       -e 's/listen\s+\[::1\]:80(\s|;)/listen [::1]:8080\1/g' \
+    #       -e 's/listen\s+\[::\]:443(\s|;)/listen [::]:8443\1/g' \
+    #       /etc/nginx/conf.d/*.conf
+    #   args:
+    #     executable: /bin/bash
+    #   changed_when: true
+
+    - name: Remove default configuration in receptor
+      ansible.builtin.copy:
+        dest: /etc/receptor/receptor.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          - node:
+              id: {{ control_node_ip }}
+           
+          - log-level: debug
+           
+          - tcp-listener:
+              port: 27199
+           
+          - control-service:
+              service: control
+              filename: /var/run/receptor/receptor.sock
+           
+          - work-command:
+              worktype: {% if 'control' in group_names or 'hop' in group_names %}local{% else %}ansible-runner{% endif %}
+              command: /var/lib/ol-automation-manager/venv/awx/bin/ansible-runner
+              params: worker
+              allowruntimeparams: true
+
+    - name: Ensure firewalld is running
+      ansible.builtin.systemd:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Set firewall service rules
+      ansible.posix.firewalld:
+        zone: public
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop:
+        - http
+        - https
+
+    - name: Set firewall port rules
+      ansible.posix.firewalld:
+        zone: public
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop:
+        - 27199/tcp
+        - 8080/tcp
+        - 8443/tcp
+
+    - name: Enable and start ol-automation service
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - ol-automation-manager
+
+    - name: Check if user is lingering
+      ansible.builtin.stat:
+        path: "/var/lib/systemd/linger/awx"
+      register: user_lingering
+
+    - name: Enable lingering is needed
+      ansible.builtin.command: "loginctl enable-linger awx"
+      register: linger_result
+      changed_when: linger_result.rc == 0
+      when: not user_lingering.stat.exists

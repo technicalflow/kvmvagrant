@@ -1,0 +1,31 @@
+private_key: "ansible"
+
+username: "madmin"
+usergroup: "{{ username }}"
+user_default_password: "password"
+debug_enabled: false
+
+use_olam_builder: false
+use_haproxy: false
+
+awx_pguser_password: password
+olam_admin_password: password
+olam_admin_user: madmin
+olam_admin_email: madmin@example.com
+
+ipa_admin_password: ADMPassword1
+ipa_dm_password: DMPassword1
+ipa_custom_domain: "olam.lab"
+
+# Set proxy if needed
+# Uncomment both the pip_proxy_env and proxy_env sections, and set the proxy host and port accordingly.
+
+# pip_proxy_env:
+#  http_proxy: 'http://www.example.com:80'
+#  https_proxy: 'https://www.example.com:80'
+
+# proxy_env:
+#  http_proxy: 'www.example.com:80'
+#  https_proxy: 'www.example.com:80'
+#  ftp_proxy: 'www.example.com:80'
+#  no_proxy: 'localhost,127.0.0.1,example.com'

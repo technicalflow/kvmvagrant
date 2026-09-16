@@ -1,0 +1,197 @@
+---
+# Copyright (c) 2025 Oracle and/or its affiliates.
+# This software is made available to you under the terms of the Universal Permissive License (UPL), Version 1.0.
+# The Universal Permissive License (UPL), Version 1.0 (see COPYING or https://oss.oracle.com/licenses/upl)
+# See LICENSE.TXT for details.
+
+- name: Configure ansible control node
+  hosts: all
+  become: true
+
+  vars_files:
+    - default_vars.yml
+
+  tasks:
+    - name: Install Oracle Linux Automation Manager repository on OL9
+      ansible.builtin.dnf:
+        name: oraclelinux-automation-manager-release-el9
+        state: present
+      retries: 5
+      delay: 10
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Enable Oracle Linux Automation Manager 2.3 repository on OL9
+      community.general.ini_file:
+        path: "/etc/yum.repos.d/oraclelinux-automation-manager-ol9.repo"
+        section: ol9_automation2.3
+        option: enabled
+        value: "1"
+        mode: "0644"
+      when: ansible_distribution == 'OracleLinux' and ansible_distribution_major_version == '9'
+
+    - name: Check if user is lingering
+      ansible.builtin.stat:
+        path: "/var/lib/systemd/linger/{{ username }}"
+      register: user_lingering
+
+    - name: Enable lingering is needed
+      ansible.builtin.command: "loginctl enable-linger {{ username }}"
+      register: linger_result
+      changed_when: linger_result.rc == 0
+      when: not user_lingering.stat.exists
+
+    - name: Install Oracle Linux Automation Manager Builder Utility
+      ansible.builtin.dnf:
+        name:
+          - python3.11-ansible-builder
+          - python3.11-pip
+        state: present
+      retries: 5
+      delay: 10
+
+    - name: Install Ansible Navigator using pip
+      ansible.builtin.pip:
+        name: ansible-navigator
+        executable: pip3.11
+
+    - name: Create project directory
+      ansible.builtin.file:
+        path: ~/my_custom_ee_project
+        state: directory
+        mode: "0775"
+      become: true
+      become_user: "{{ username }}"
+
+    - name: Create execution-environment.yml
+      ansible.builtin.copy:
+        dest: ~/my_custom_ee_project/execution-environment.yml
+        mode: "0644"
+        content: |
+          ---
+          version: 3
+
+          build_arg_defaults:
+            ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--pre --ignore-certs'
+
+          dependencies:
+            ansible_runner:
+              package_pip: ansible-runner
+            galaxy: requirements.yml
+            python: requirements.txt
+            system: bindep.txt
+
+          images:
+            base_image:
+              name: container-registry.oracle.com/oracle_linux_automation_manager/olam-ee:2.3-ol9
+
+          additional_build_files:
+            - src: ansible.cfg
+              dest: configs 
+            
+          additional_build_steps:
+            prepend_galaxy:
+              - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
+            prepend_final: |
+              RUN whoami
+              RUN cat /etc/os-release
+            append_final:
+              - RUN echo This is a post-install command!
+              - RUN ls -la /etc
+      become: true
+      become_user: "{{ username }}"
+
+    - name: Create ansible.cfg
+      ansible.builtin.file:
+        path: ~/my_custom_ee_project/ansible.cfg
+        state: touch
+        mode: "0644"
+      become: true
+      become_user: "{{ username }}"
+
+    - name: Create requirements.yml
+      ansible.builtin.copy:
+        dest: ~/my_custom_ee_project/requirements.yml
+        mode: "0644"
+        content: |
+          ---
+          collections:
+          - name: oracle.oci
+            version: ">=5.5.0,<6.0.0"
+            type: galaxy
+          - name: ovirt.ovirt
+      become: true
+      become_user: "{{ username }}"
+
+    - name: Create requirements.txt
+      ansible.builtin.copy:
+        dest: ~/my_custom_ee_project/requirements.txt
+        mode: "0644"
+        content: |
+          requests>=2.4.2
+          ovirt-engine-sdk-python>=4.6.2
+          oci>=2.155.0
+      become: true
+      become_user: "{{ username }}"
+
+    - name: Create bindep.txt
+      ansible.builtin.copy:
+        dest: ~/my_custom_ee_project/bindep.txt
+        mode: "0644"
+        content: |
+          gcc
+          libcurl-devel
+          libxml2-devel
+          python3-devel
+          openssl-devel
+      become: true
+      become_user: "{{ username }}"
+
+    - name: Create custom execution environment image
+      ansible.builtin.shell: |
+        cd ~/my_custom_ee_project
+        ansible-builder build --tag my_custom_ee -v 3
+      become: true
+      become_user: "{{ username }}"
+      register: builder_output
+      changed_when: builder_output.rc != 0
+
+    - name: Print the Builder results
+      ansible.builtin.debug:
+        msg: "{{ builder_output.stdout }}"
+      when: debug_enabled
+
+    - name: Create ansible project directory
+      ansible.builtin.file:
+        path: /tmp/private/project
+        state: directory
+        mode: "0775"
+      become: true
+      become_user: "{{ username }}"
+
+    - name: Create playbook
+      ansible.builtin.copy:
+        dest: /tmp/private/project/playbook.yml
+        mode: "0644"
+        content: |
+          ---
+          - name: get namespace name
+            hosts: localhost
+            tasks:
+              - name: get namespace
+                oracle.oci.oci_object_storage_namespace_facts:
+                register: output
+              - name: print namespace
+                debug:
+                  msg: "{% raw %}{{ output }}{% endraw %}"
+      become: true
+      become_user: "{{ username }}"
+
+    # - name: Test custom ee
+    #   ansible.builtin.command: ansible-runner run --process-isolation --container-image=my_custom_ee -p playbook.yml /tmp/private
+    #   become_user: "{{ username }}"
+    #   register: runner_output
+
+    # - name: Print runner results
+    #   ansible.builtin.debug:
+    #     msg: "{{ runner_output.stdout }}"
+    #   when: debug_enabled

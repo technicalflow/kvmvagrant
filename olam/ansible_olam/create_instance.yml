@@ -1,0 +1,43 @@
+---
+# Copyright (c) 2024 Oracle and/or its affiliates.
+# This software is made available to you under the terms of the Universal Permissive License (UPL), Version 1.0.
+# The Universal Permissive License (UPL), Version 1.0 (see COPYING or https://oss.oracle.com/licenses/upl)
+# See LICENSE.TXT for details.
+
+- name: Check if instances are available
+  ansible.builtin.import_playbook: "check_instance_available.yml"
+
+- name: Setup and configure instance basics
+  ansible.builtin.import_playbook: "provision_instance_basics.yml"
+
+- name: Update all rpm packages
+  ansible.builtin.import_playbook: "update_all_rpms.yml"
+
+- name: Install additional packages
+  ansible.builtin.import_playbook: "install_packages.yml"
+
+- name: Install Oracle Linux Automation Manager
+  ansible.builtin.import_playbook: "deploy_olam_single.yml"
+
+- name: Provision Oracle Linux Automation Builder Utility
+  ansible.builtin.import_playbook: "provision_builder.yml"
+
+# In order to use FreeIPA with OLAM enable lines 333-345 in "deploy_olam_single.yml"
+# - name: Provision freeipa server
+#   ansible.builtin.import_playbook: "provision_free_ipa.yml"
+
+# - name: Provision KVM
+#   ansible.builtin.import_playbook: "provision_kvm.yml"
+
+- name: Print instances
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Print instance details
+      ansible.builtin.debug:
+        msg:
+          - "Instance details:"
+          - "  name: {{ hostvars[inventory_hostname]['ansible_hostname'] }}"
+          - "  public ip: {{ hostvars[inventory_hostname]['ansible_host'] }}"
+          - "  private ip: {{ hostvars[inventory_hostname]['ansible_eth1']['ipv4']['address'] }}"
