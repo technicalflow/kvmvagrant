@@ -104,7 +104,7 @@ source "qemu" "ubuntu-24-04-uefi" {
   disk_size = var.disk_size
 
   disk_cache       = "writeback"
-  disk_compression = true
+  disk_compression = false
   disk_image       = false
   disk_interface   = "virtio"
   format           = "qcow2"
@@ -166,7 +166,7 @@ build {
       "export LIBGUESTFS_BACKEND=direct",
       "sudo qemu-img convert -f qcow2 -O qcow2 \"$_IMAGE\" \"$_IMAGE.convert\" && sudo rm -rf \"$_IMAGE\"",
       "sudo LIBGUESTFS_BACKEND=direct virt-sysprep --operations defaults,machine-id,-ssh-userdir,-customize -a \"$_IMAGE.convert\"",
-      "sudo LIBGUESTFS_BACKEND=direct virt-customize --no-network -a \"$_IMAGE.convert\" --delete \"/var/lib/*/random-seed\" --delete \"/var/lib/wicked/*\" --firstboot-command \"ssh-keygen -A && systemctl restart sshd.service && grub-editenv - set boot_success=1 && grub-editenv - unset recordfail"\"",
+      "sudo LIBGUESTFS_BACKEND=direct virt-customize --no-network -a \"$_IMAGE.convert\" --delete \"/var/lib/*/random-seed\" --delete \"/var/lib/wicked/*\" --firstboot-command \"ssh-keygen -A && systemctl restart sshd.service && grub-editenv - set boot_success=1 && grub-editenv - unset recordfail\"",
       "sudo LIBGUESTFS_BACKEND=direct virt-sparsify --in-place \"$_IMAGE.convert\"",
       "sudo qemu-img convert -f qcow2 -O qcow2 -c \"$_IMAGE.convert\" \"$_IMAGE\"",
       "sudo rm -rf \"$_IMAGE.convert\""
