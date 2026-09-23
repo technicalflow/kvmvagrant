@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -32,16 +32,17 @@ INSTALLINGRESS=false
 # kubeadm config images pull
 
 echo "========================== Kube-VIP Install =========================="
+mkdir -p /etc/kubernetes/manifests
 # Install Kube-VIP
 # alias kube-vip="ctr image pull ghcr.io/kube-vip/kube-vip:$KVVERSION; ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KVVERSION vip /kube-vip"
-ctr image pull ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION
-ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION vip /kube-vip manifest pod \
-    --interface $VIPINTERFACE \
-    --address $VIP \
+ctr image pull "ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION"
+ctr run --rm --net-host "ghcr.io/kube-vip/kube-vip:$KUBEVIPVERSION" vip /kube-vip manifest pod \
+    --interface "$VIPINTERFACE" \
+    --address "$VIP" \
     --controlplane \
     --services \
     --arp \
-    --leaderElection | tee /etc/kubernetes/manifests/kube-vip.yaml
+    --leaderElection > /etc/kubernetes/manifests/kube-vip.yaml
 
 # Workaround for kube-vip issue with kubeadm
 sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' \
@@ -49,19 +50,20 @@ sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.con
 
 # Master Configuration
 echo "========================== Kubernetes Master Configuration INIT =========================="
-kubeadm init --pod-network-cidr=$PODNETWORK --apiserver-advertise-address=$HOSTIP --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
+kubeadm init --pod-network-cidr="$PODNETWORK" --apiserver-advertise-address="$HOSTIP" --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
 # kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
 
 # Workaround for kube-vip issue with kubeadm 
 sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' \
           /etc/kubernetes/manifests/kube-vip.yaml
-cp -r /etc/kubernetes/manifests/kube-vip.yaml /vagrant/kube-vip.yaml
+cp /etc/kubernetes/manifests/kube-vip.yaml /vagrant/kube-vip.yaml
 
 mkdir -p /home/vagrant/.kube
 mkdir -p /root/.kube
-cp -r /etc/kubernetes/admin.conf /home/vagrant/.kube/config
-cp -r /etc/kubernetes/admin.conf /root/.kube/config
+cp /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+cp /etc/kubernetes/admin.conf /root/.kube/config
 chown -R vagrant:vagrant /home/vagrant/.kube
+chmod 0600 /home/vagrant/.kube/config /root/.kube/config
 
 echo "========================== Export tokens =========================="
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' > /vagrant/ca_cert_hash
@@ -78,39 +80,42 @@ kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/
 # Wait for kube-apiserver VIP to be ready
 echo "========================== Waiting for Kube-VIP IP =========================="
 sleep 5
-until [ "$(curl -k -s -o /dev/null -w "%{http_code}" https://$VIP:6443/healthz 2>/dev/null || true)" = "200" ]; do echo "Waiting for Kube-VIP "; sleep 5; done
-
 # while [ "$(curl -k -s -o /dev/null -w "%{http_code}" https://$VIP:6443)" != "403" ]; do
 #     echo 'sleep 5' && sleep 5
 # done
 
+until [ "$(curl -k -s --connect-timeout 2 -o /dev/null -w "%{http_code}" "https://$VIP:6443/healthz" 2>/dev/null || true)" = "200" ]; do
+    echo "Waiting for Kube-VIP..."
+    sleep 5
+done
+
 # Install Calico
 echo "========================== Install Calico =========================="
-curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
+curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
 kubectl create -f /vagrant/tigera.yaml
 sleep 5
-curl -fs https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
+curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
 # Insert pod network CIDR in calico.yaml
 sed -i "s|cidr:.*|cidr: $PODNETWORK|g" /vagrant/calico.yaml
 sed -i 's|encapsulation:.*|encapsulation: None|g' /vagrant/calico.yaml
 kubectl create -f /vagrant/calico.yaml
 
-# # Install MetalLB
-if $INSTALLMETALLB == true; then
-    curl -fs https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml > /vagrant/metallb.yaml
+# Install MetalLB
+if [[ "$INSTALLMETALLB" == true ]]; then
+    curl -fsSL https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml > /vagrant/metallb.yaml
     kubectl apply -f /vagrant/metallb.yaml
     # kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 fi
 
 # Install Metrics Server
-if $INSTALLMETRICS == true; then
+if [[ "$INSTALLMETRICS" == true ]]; then
     wget -q -O /vagrant/components.yaml https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
     sed -i 's| - --secure-port=10250| - --secure-port=10250\n        - --kubelet-insecure-tls|' /vagrant/components.yaml
     kubectl apply -f /vagrant/components.yaml
 fi
 
-# # Install Helm
-if $INSTALLHELM == true; then
+# Install Helm
+if [[ "$INSTALLHELM" == true ]]; then
     curl -fsSL -o /vagrant/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
     chmod 700 /vagrant/get_helm.sh
     /vagrant/get_helm.sh
@@ -130,7 +135,7 @@ if [[ "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
 fi
 
 # Sample with Ingress Configuration
-# if [[ "$SAMPLEWEBAPP" == true && "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true]]; then
+# if [[ "$SAMPLEWEBAPP" == true && "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
 #     kubectl apply -f /vagrant/samplewebappingress.yaml
 # fi
 

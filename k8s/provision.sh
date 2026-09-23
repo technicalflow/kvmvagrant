@@ -1,8 +1,6 @@
-#!/bin/bash
-
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
@@ -40,14 +38,11 @@ swapoff -a
 systemctl stop swap.target
 systemctl disable swap.target
 
-modprobe br_netfilter
-modprobe overlay
+modprobe br_netfilter || true
+modprobe overlay || true
 
-sysctl net.bridge.bridge-nf-call-ip6tables=1
-sysctl net.bridge.bridge-nf-call-iptables=1
-sysctl net.ipv4.ip_forward=1
-touch /etc/sysctl.d/10-kubernetes.conf
-tee /etc/sysctl.d/10-kubernetes.conf<<EOF
+mkdir -p /etc/sysctl.d
+cat << EOF > /etc/sysctl.d/10-kubernetes.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1

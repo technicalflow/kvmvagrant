@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 USER=vagrant
 
@@ -22,9 +22,9 @@ apt-get install -y \
     gpg \
     jq
 
-if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent && systemctl enable --now serial-getty@ttyS0.service; fi
+if [ "$(systemd-detect-virt)" = "kvm" ] ; then apt-get install -y qemu-guest-agent && systemctl enable --now serial-getty@ttyS0.service; fi
 
-apt-get purge
+apt-get purge -y
 apt-get autoremove -y
 apt-get clean
 
@@ -37,11 +37,9 @@ systemctl disable swap.target
 modprobe br_netfilter
 modprobe overlay
 
-sysctl net.bridge.bridge-nf-call-ip6tables=1
-sysctl net.bridge.bridge-nf-call-iptables=1
-sysctl net.ipv4.ip_forward=1
+mkdir -p /etc/sysctl.d
 touch /etc/sysctl.d/10-kubernetes.conf
-tee /etc/sysctl.d/10-kubernetes.conf<<EOF
+cat << EOF > /etc/sysctl.d/10-kubernetes.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
@@ -59,7 +57,7 @@ EOF
 sysctl --system
 
 # Set proper routing
-if [ "$(. /etc/os-release && printf '%s' "$ID")" = "debian" ]; then
+if [ -f /etc/os-release ] && [ "$(. /etc/os-release && printf '%s' "$ID")" = "debian" ] && [ -f /etc/network/interfaces ]; then
     sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
     systemctl restart networking.service
 fi
@@ -68,7 +66,7 @@ sleep 5
 ip a | grep inet
 ip r
 
-#Install microk8s
+# Install microk8s
 apt-get update && apt-get install -y snapd
 systemctl enable --now snapd.service
 sleep 1 && snap refresh
@@ -79,7 +77,7 @@ mkdir -p /home/$USER/.kube
 chown -R $USER:$USER /home/$USER/.kube
 chmod 0700 /home/$USER/.kube
 
-ln -s /snap/bin/microk8s /usr/sbin/microk8s
+ln -sfn /snap/bin/microk8s /usr/sbin/microk8s
 
 #/snap/bin/microk8s enable ha-cluster
 
@@ -90,9 +88,10 @@ ln -s /snap/bin/microk8s /usr/sbin/microk8s
 # MicroCeph Cluster
 modprobe rbd
 snap install microceph --channel=latest/edge
-ln -s /snap/bin/microceph /usr/sbin/microceph
-ln -s /snap/bin/ceph /usr/sbin/ceph
+ln -sfn /snap/bin/microceph /usr/sbin/microceph
+ln -sfn /snap/bin/ceph /usr/sbin/ceph
 
+# Clear disk if required
 # printf "g\nw\n" | fdisk /dev/vdb
 
 echo DONE

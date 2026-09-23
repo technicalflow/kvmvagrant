@@ -19,7 +19,7 @@
     # Uncomment to reboot hosts after configuration:
     # - role: restart_machines
 
-- name: Hardening – storage/app servers
+- name: Hardening storage/app servers
   hosts: msklad12test01
   gather_facts: true
   become: false

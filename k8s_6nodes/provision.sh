@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
@@ -23,11 +23,12 @@ apt-get install -y \
     ethtool \
     jq
 
-if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent && systemctl enable --now serial-getty@ttyS0.service; fi
+if [ "$(systemd-detect-virt)" = "kvm" ] ; then apt-get install -y qemu-guest-agent && systemctl enable --now serial-getty@ttyS0.service; fi
 
 apt-get purge -y
 apt-get autoremove -y
 apt-get clean
+
 # Turn swap off
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
@@ -38,11 +39,9 @@ systemctl disable swap.target
 modprobe br_netfilter
 modprobe overlay
 
-sysctl net.bridge.bridge-nf-call-ip6tables=1
-sysctl net.bridge.bridge-nf-call-iptables=1
-sysctl net.ipv4.ip_forward=1
+mkdir -p /etc/sysctl.d
 touch /etc/sysctl.d/10-kubernetes.conf
-tee /etc/sysctl.d/10-kubernetes.conf<<EOF
+cat << EOF > /etc/sysctl.d/10-kubernetes.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
@@ -61,7 +60,7 @@ EOF
 sysctl --system
 
 # Set routing
-if [ "$(. /etc/os-release && printf '%s' "$ID")" = "debian" ]; then
+if [ -f /etc/os-release ] && [ "$(. /etc/os-release && printf '%s' "$ID")" = "debian" ] && [ -f /etc/network/interfaces ]; then
     sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces
     systemctl restart networking.service
 fi

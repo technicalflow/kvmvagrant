@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -euo pipefail
 
 # Not for Ubuntu 18.04
 curl -fsSL https://get.docker.com | sh

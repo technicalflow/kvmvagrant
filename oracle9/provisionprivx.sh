@@ -1,5 +1,6 @@
-#!/bin/bash
 #!/usr/bin/env bash
+
+set -euo pipefail
 
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
@@ -20,9 +21,11 @@ echo DONE
 
 echo "Install PrivX"
 rpm --import https://product-repository.ssh.com/info.fi-ssh.com-pubkey.asc
-curl https://product-repository.ssh.com/rhel9/ssh-products.repo -o /etc/yum.repos.d/ssh-products.repo
-dnf update
+curl -fsSL https://product-repository.ssh.com/rhel9/ssh-products.repo -o /etc/yum.repos.d/ssh-products.repo
+dnf update -y
 dnf install -y postgresql PrivX
+
+echo DONE
 
 # cat << EOFinstall > /opt/privx/scripts/postinstall_env
 # # Variables for postinstall.sh automation.

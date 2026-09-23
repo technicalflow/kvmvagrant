@@ -1,6 +1,7 @@
-#!/bin/bash
-
 #!/usr/bin/env bash
+
+set -euo pipefail
+
 export DEBIAN_FRONTEND=noninteractive
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
@@ -28,8 +29,8 @@ apt-get install -y \
 
 if [ $(systemd-detect-virt) == "kvm" ] ; then apt-get install -y qemu-guest-agent && systemctl enable --now serial-getty@ttyS0.service; fi
 
-apt-get autoremove
-apt-get purge
+apt-get autoremove -y
+apt-get purge -y
 apt-get clean
 
 if [ $(hostname) == "dsm" ] ; then sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces && systemctl restart networking.service; fi

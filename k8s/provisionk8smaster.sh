@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 INSTALLHELM=true
 INSTALLMETALLB=true
@@ -14,12 +14,13 @@ PODNETWORK="172.20.0.0/16"
 echo " Kubernetes Master Configuration INIT"
 kubeadm init --pod-network-cidr=$PODNETWORK --apiserver-advertise-address=$HOSTIP --node-name=k8smaster
 
-echo " Copy kubeconfig to vagrant user"
+echo " Copy kubeconfig to vagrant and root users"
 mkdir -p /home/vagrant/.kube
 mkdir -p /root/.kube
-cp -r /etc/kubernetes/admin.conf /home/vagrant/.kube/config
-cp -r /etc/kubernetes/admin.conf /root/.kube/config
+cp /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+cp /etc/kubernetes/admin.conf /root/.kube/config
 chown -R vagrant:vagrant /home/vagrant/.kube
+chmod 0600 /home/vagrant/.kube/config /root/.kube/config
 
 echo " Generate CA certificate hash"
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' > /vagrant/ca_cert_hash
