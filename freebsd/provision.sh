@@ -178,3 +178,9 @@ service pf restart || service pf start
 sysrc unbound_enable="YES"
 unbound-checkconf /usr/local/etc/unbound/unbound.conf
 service unbound restart || service unbound start
+
+# Check DNS over HTTPS:
+# curl -v --doh-url https://127.0.0.1/dns-query --doh-insecure -I https://cloudflare.com
+
+# Check DNSSEC from other host
+# dig @192.168.50.242 cloudflare.com +dnssec

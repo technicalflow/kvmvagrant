@@ -9,7 +9,7 @@
   become: false
 
   roles:
-    - role: update
+    - role: update_all
     - role: system
     - role: epel_release
     - role: package_install
