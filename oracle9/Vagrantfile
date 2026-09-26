@@ -82,4 +82,3 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: "echo 'INSTALLER: Installation complete, Oracle Linux 9 ready to use!'"
 
 end
-end

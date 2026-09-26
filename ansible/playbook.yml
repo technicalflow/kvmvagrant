@@ -25,4 +25,4 @@
   become: false
 
   roles:
-    - role: hardening
+    - role: hardening_all
