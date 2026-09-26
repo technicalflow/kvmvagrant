@@ -62,9 +62,9 @@ Vagrant.configure("2") do |config|
     ip a | grep inet
   SHELL
   
-  config.user.defaults = {
-    'timezone' => 'Europe/London',
-  }
+  # config.user.defaults = {
+  #   'timezone' => 'Europe/London',
+  # }
 
   config.vm.provision :ansible do |ansible|
     ansible.verbose = "v"
@@ -75,7 +75,7 @@ Vagrant.configure("2") do |config|
     ansible.galaxy_command = "ansible-galaxy collection install -r %{role_file} --force"
     ansible.extra_vars = {
       ansible_python_interpreter: '/usr/bin/python3',
-      timezone: config.user.timezone
+      # timezone: config.user.timezone
     }
   end
 
