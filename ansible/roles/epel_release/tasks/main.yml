@@ -12,11 +12,26 @@
     - ansible_distribution == "CentOS"
     - ansible_distribution_major_version | int == 7
 
-- name: Enable EPEL repository (CentOS 8+ / OracleLinux / AlmaLinux / Rocky)
+- name: Enable EPEL repository (CentOS 8+, AlmaLinux, Rocky)
   ansible.builtin.dnf:
     name: epel-release
     state: present
   become: true
   when: >
     (ansible_distribution == "CentOS" and ansible_distribution_major_version | int >= 8) or
-    ansible_distribution in ["OracleLinux", "AlmaLinux", "Rocky"]
+    ansible_distribution in ["AlmaLinux", "Rocky"]
+
+- name: Enable EPEL repository (RHEL)
+  ansible.builtin.dnf:
+    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+    state: present
+  become: true
+  when: ansible_distribution == "RedHat"
+
+- name: Enable EPEL repository (Oracle Linux)
+  ansible.builtin.dnf:
+    name: "oracle-epel-release-el{{ ansible_distribution_major_version }}"
+    state: present
+  become: true
+  when: ansible_distribution == "OracleLinux"
+

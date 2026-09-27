@@ -1,0 +1,90 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version.
+VAGRANTFILE_API_VERSION = "2"
+
+# Box metadata location and box name
+BOX_URL = "https://oracle.github.io/vagrant-projects/boxes"
+BOX_NAME = "oraclelinux/10"
+
+ui = Vagrant::UI::Prefixed.new(Vagrant::UI::Colored.new, "vagrant")
+
+vmhostname = "msklaol10fipa01"
+vmip = "192.168.50.50"
+
+Vagrant.configure("2") do |config|
+  config.vm.box = BOX_NAME
+  config.vm.box_url = "#{BOX_URL}/#{BOX_NAME}.json"
+  config.vm.define "#{vmhostname}"
+  config.vm.hostname = "#{vmhostname}"
+  config.vm.provider :libvirt do |v|
+    v.cpus = 4
+    v.memory = 4096
+    v.nested = true
+    v.disk_bus = "virtio"
+    v.disk_driver :cache => "writeback"
+    v.driver = "kvm"
+    v.machine_type = "q35"
+    v.cpu_mode = "host-passthrough"
+    v.nic_model_type = "virtio"
+    # Add video type for Rhel10
+    v.video_type = "vga"
+    v.video_vram = 16384
+    # v.storage_pool_name = "ssdpool"
+    v.channel :type => 'unix', :target_name => 'org.qemu.guest_agent.0', :target_type => 'virtio', :disabled => false
+    v.serial :type => "pty"
+  end
+
+  config.vm.network :public_network,
+    :dev => "br0",
+    :mode => "bridge",
+    :type => "bridge",
+    :ip => "#{vmip}"
+
+  config.vm.synced_folder ".", "/vagrant",
+    # owner: "vagrant", group: "vagrant"
+    type: "nfs",
+    nfs_version: 4,
+    nfs_udp: false
+
+  config.vm.provision :ansible do |ansible|
+    ansible.verbose = "v"
+    ansible.compatibility_mode = "2.0"
+    # ansible.extra_vars = { "ansible_python_interpreter" => "/usr/bin/python2" }
+    ansible.playbook = "../ansible/playbook.yml"
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+  # Modfy SELinux
+    setenforce 0
+    sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
+    systemctl restart NetworkManager
+    nmcli connection modify eth0 ipv4.never-default true
+    # nmcli connection modify eth1 ipv4.routes "0.0.0.0/0 192.168.50.250 10"
+    nmcli connection modify eth1 ipv4.route-metric 10
+    nmcli connection modify eth1 ipv4.gateway "192.168.50.250"
+    nmcli connection modify eth1 ipv4.dns "192.168.50.250" || true
+    nmcli connection modify eth1 ipv4.ignore-auto-dns yes || true
+    nmcli connection modify eth1 ipv6.ignore-auto-dns yes || true
+    nmcli c down eth1 && nmcli c up eth1
+    # systemctl enable --now serial-getty@ttyS0.service
+    # ip route delete default && ip route replace default via 192.168.50.250 metric 11
+    ip a | grep inet
+    cat /etc/os-release
+  SHELL
+
+  config.vm.provision "shell", path: "./provision.sh", run: "once"
+
+  # Provision everything on the first run
+  # config.vm.provision "shell", path: "scripts/install.sh"
+  # if Vagrant.has_plugin?("vagrant-reload")
+  #   config.vm.provision "shell", inline: "echo 'Reloading your VM to activate the latest kernel'"
+  #   config.vm.provision :reload
+  # else
+  #   config.vm.provision "shell", inline: "echo 'You need to reload your VM to activate the latest kernel'"
+  # end
+
+  config.vm.provision "shell", inline: "echo 'INSTALLER: Installation complete, Oracle Linux 10 ready to use!'"
+
+end
