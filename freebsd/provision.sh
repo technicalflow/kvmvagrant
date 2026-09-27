@@ -7,6 +7,7 @@ NETWORK6="fd50::/8"
 TIMEZONE="${1:-Europe/Warsaw}"
 NTP_POOL0="${2:-0.pl.pool.ntp.org}"
 NTP_POOL1="${3:-1.pl.pool.ntp.org}"
+DOMAIN="${4:-home.lab}"
 
 # DNS for FreeBSD
 
@@ -39,8 +40,8 @@ service ntpd start
 if [ ! -f /usr/local/etc/ssl/myCA.key ]; then
 mkdir -p /usr/local/etc/ssl
 openssl genrsa -out /usr/local/etc/ssl/myCA.key 2048
-openssl req -x509 -new -nodes -key /usr/local/etc/ssl/myCA.key -sha256 -days 1825 -subj '/CN=home.lab CA' -out /usr/local/etc/ssl/myCA.pem
-openssl req -new -newkey rsa:2048 -nodes -keyout /usr/local/etc/ssl/mydomain.key -subj '/CN=home.lab' -out /usr/local/etc/ssl/mydomain.csr
+openssl req -x509 -new -nodes -key /usr/local/etc/ssl/myCA.key -sha256 -days 1825 -subj '/CN=${DOMAIN} CA' -out /usr/local/etc/ssl/myCA.pem
+openssl req -new -newkey rsa:2048 -nodes -keyout /usr/local/etc/ssl/mydomain.key -subj '/CN=${DOMAIN}' -out /usr/local/etc/ssl/mydomain.csr
 openssl x509 -req -in /usr/local/etc/ssl/mydomain.csr -CA /usr/local/etc/ssl/myCA.pem -CAkey /usr/local/etc/ssl/myCA.key -CAcreateserial -out /usr/local/etc/ssl/mydomain.pem -days 1825 -sha256
 
 chmod 600 /usr/local/etc/ssl/myCA.key /usr/local/etc/ssl/mydomain.key
@@ -99,10 +100,9 @@ server:
         qname-minimisation: yes
         harden-referral-path: no
         log-time-ascii: yes
-        private-domain: "home.lab"
-        local-zone: "home.lab" static
-        domain-insecure: "home.lab"
-        # local-data: "mu.tmnt.local. IN A 192.168.51.10"
+        private-domain: "${DOMAIN}"
+        local-zone: "${DOMAIN}" static
+        domain-insecure: "${DOMAIN}"
         local-data: "sv-lambda. IN A 192.168.50.203"
         local-data: "privx.home.lab. IN A 192.168.50.230"
         local-data-ptr: "192.168.50.230 privx.home.lab"
