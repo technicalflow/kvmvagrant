@@ -51,7 +51,7 @@ sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.con
 # Master Configuration
 echo "========================== Kubernetes Master Configuration INIT =========================="
 kubeadm init --pod-network-cidr="$PODNETWORK" --apiserver-advertise-address="$HOSTIP" --node-name=k8sm1 --control-plane-endpoint "$VIP:6443"
-# kubeadm init --node-name=k8sm1 --config /vagrant/kubeadm-config.yaml
+# kubeadm init --node-name=k8sm1 --config /opt/kubeadm-config.yaml
 
 # Workaround for kube-vip issue with kubeadm 
 sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' \
@@ -69,9 +69,9 @@ echo "========================== Export tokens =========================="
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' > /vagrant/ca_cert_hash
 kubeadm token list -o yaml | grep token: | awk '{print $2}' > /vagrant/kubeadm_join
 
-# kubectl -n kube-system get cm kubeadm-config -o json |jq -r '.data.ClusterConfiguration' > /vagrant/kubeadm-config.yaml
-# sed -i '/clusterName: kubernetes/a\controlPlaneEndpoint: k8sm1:6443' /vagrant/kubeadm-config.yaml
-# kubeadm init phase upload-certs --upload-certs --config /vagrant/kubeadm-config.yaml
+# kubectl -n kube-system get cm kubeadm-config -o json |jq -r '.data.ClusterConfiguration' > /opt/kubeadm-config.yaml
+# sed -i '/clusterName: kubernetes/a\controlPlaneEndpoint: k8sm1:6443' /opt/kubeadm-config.yaml
+# kubeadm init phase upload-certs --upload-certs --config /opt/kubeadm-config.yaml
 kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1 > /vagrant/cert_key
 # kubeadm certs certificate-key > /vagrant/cert_key
 
@@ -91,34 +91,34 @@ done
 
 # Install Calico
 echo "========================== Install Calico =========================="
-curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /vagrant/tigera.yaml
-kubectl create -f /vagrant/tigera.yaml
+curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /opt/tigera.yaml
+kubectl create -f /opt/tigera.yaml
 sleep 5
-curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /vagrant/calico.yaml
+curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /opt/calico.yaml
 # Insert pod network CIDR in calico.yaml
-sed -i "s|cidr:.*|cidr: $PODNETWORK|g" /vagrant/calico.yaml
-sed -i 's|encapsulation:.*|encapsulation: None|g' /vagrant/calico.yaml
-kubectl create -f /vagrant/calico.yaml
+sed -i "s|cidr:.*|cidr: $PODNETWORK|g" /opt/calico.yaml
+sed -i 's|encapsulation:.*|encapsulation: None|g' /opt/calico.yaml
+kubectl create -f /opt/calico.yaml
 
 # Install MetalLB
 if [[ "$INSTALLMETALLB" == true ]]; then
-    curl -fsSL https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml > /vagrant/metallb.yaml
-    kubectl apply -f /vagrant/metallb.yaml
+    curl -fsSL https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml > /opt/metallb.yaml
+    kubectl apply -f /opt/metallb.yaml
     # kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 fi
 
 # Install Metrics Server
 if [[ "$INSTALLMETRICS" == true ]]; then
-    wget -q -O /vagrant/components.yaml https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-    sed -i 's| - --secure-port=10250| - --secure-port=10250\n        - --kubelet-insecure-tls|' /vagrant/components.yaml
-    kubectl apply -f /vagrant/components.yaml
+    wget -q -O /opt/components.yaml https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    sed -i 's| - --secure-port=10250| - --secure-port=10250\n        - --kubelet-insecure-tls|' /opt/components.yaml
+    kubectl apply -f /opt/components.yaml
 fi
 
 # Install Helm
 if [[ "$INSTALLHELM" == true ]]; then
-    curl -fsSL -o /vagrant/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
-    chmod 700 /vagrant/get_helm.sh
-    /vagrant/get_helm.sh
+    curl -fsSL -o /opt/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
+    chmod 700 /opt/get_helm.sh
+    /opt/get_helm.sh
     # # Install Helm Chart
     helm repo add stable https://charts.helm.sh/stable
     helm repo update
@@ -128,10 +128,10 @@ fi
 if [[ "$INSTALLINGRESS" == true && "$INSTALLMETALLB" == true ]]; then
     helm repo update
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-    helm template ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version 4.11.3 --namespace ingress-nginx > /vagrant/ingress.yaml
-    sed -i 's|  type: LoadBalancer|  type: LoadBalancer\n  externalIPs:\n    - 192.168.50.238|' /vagrant/ingress.yaml
+    helm template ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version 4.11.3 --namespace ingress-nginx > /opt/ingress.yaml
+    sed -i 's|  type: LoadBalancer|  type: LoadBalancer\n  externalIPs:\n    - 192.168.50.238|' /opt/ingress.yaml
     kubectl create ns ingress-nginx
-    kubectl apply -f /vagrant/ingress.yaml --namespace ingress-nginx
+    kubectl apply -f /opt/ingress.yaml --namespace ingress-nginx
 fi
 
 # Sample with Ingress Configuration
@@ -178,3 +178,5 @@ rm -rf /root/.kube
 #       nodeSelector: all()
 
 # kubectl get tigerastatus
+
+if [ $(hostname) == "k8sm1" ] ; then sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces && systemctl restart networking.service && sleep 1; fi

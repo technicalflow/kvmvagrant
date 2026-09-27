@@ -17,6 +17,7 @@ sleep 5
 # mkdir -p /usr/lib/cni && ln -s /opt/cni/bin/* /usr/lib/cni/ 2>/dev/null || true
 ln -sfn /opt/cni/bin /usr/lib/cni
 
+# [ -e /usr/lib/cni ] || ln -s /opt/cni/bin /usr/lib/cni
 mkdir -p /etc/containerd/ && touch /etc/containerd/config.toml
 containerd config default > /etc/containerd/config.toml
 sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.toml
