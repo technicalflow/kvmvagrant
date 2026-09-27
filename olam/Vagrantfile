@@ -9,15 +9,17 @@ BOX_URL = "https://oracle.github.io/vagrant-projects/boxes"
 BOX_NAME = "oraclelinux/9"
 
 ui = Vagrant::UI::Prefixed.new(Vagrant::UI::Colored.new, "vagrant")
+vmhostname = "msklaoel9olam01"
+vmip = "192.168.50.231"
 
 Vagrant.configure("2") do |config|
   config.vm.box = BOX_NAME
   config.vm.box_url = "#{BOX_URL}/#{BOX_NAME}.json"
-  config.vm.define "msklaoel9olam01"
-  config.vm.hostname = "msklaoel9olam01"
+  config.vm.define "#{vmhostname}"
+  config.vm.hostname = "#{vmhostname}"
   config.vm.provider :libvirt do |v|
     v.cpus = 4
-    v.memory = 8192
+    v.memory = 4096
     v.nested = true
     v.disk_bus = "virtio"
     v.disk_driver :cache => "writeback"
@@ -37,7 +39,7 @@ Vagrant.configure("2") do |config|
     :dev => "br0",
     :mode => "bridge",
     :type => "bridge",
-    :ip => "192.168.50.231"
+    :ip => "#{vmip}"
 
   config.vm.synced_folder ".", "/vagrant",
     # owner: "vagrant", group: "vagrant"
@@ -51,7 +53,9 @@ Vagrant.configure("2") do |config|
     echo LC_ALL=en_US.utf-8 >> /etc/environment
     timedatectl set-timezone Europe/Warsaw
     swapoff -a
-    sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+    systemctl stop swap.target
+    systemctl mask swap.target
+    sed -i '/swap/s/^/#/' /etc/fstab
     nmcli connection modify 'eth0' ipv4.never-default true
     nmcli connection modify 'System eth1' ipv4.routes "0.0.0.0/0 192.168.50.250 10"
     nmcli connection modify 'System eth1' ipv4.route-metric 10

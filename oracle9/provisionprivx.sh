@@ -12,10 +12,12 @@ echo LC_ALL=en_US.utf-8 >> /etc/environment
 timedatectl set-timezone Europe/Warsaw
 
 systemctl enable --now serial-getty@ttyS0.service
-swapoff -a
 
 #Turn swap off
-sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+swapoff -a
+systemctl stop swap.target
+systemctl mask swap.target
+sed -i '/swap/s/^/#/' /etc/fstab
 
 echo DONE
 

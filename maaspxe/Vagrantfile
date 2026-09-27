@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
           lv.boot boot_network
           lv.boot 'hd'
           lv.cpus = 4
-          lv.memory = 8192
+          lv.memory = 4096
           lv.nested = true
           lv.driver = "kvm"
           lv.machine_type = "q35"

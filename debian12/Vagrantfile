@@ -1,12 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-manager_hostname = "msklad12test01"
+vmhostname = "msklad12test01"
+vmip = ""
 image_name = "debian/bookworm64"
 
 Vagrant.configure("2") do |config|
   config.vm.box = "#{image_name}"
-  config.vm.hostname = "#{manager_hostname}"
+  config.vm.hostname = "#{vmhostname}"
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   config.vm.provider :libvirt do |libvirt|

@@ -10,11 +10,14 @@ BOX_NAME = "oraclelinux/9"
 
 ui = Vagrant::UI::Prefixed.new(Vagrant::UI::Colored.new, "vagrant")
 
+vmhostname = "msklaoel9prix01"
+vmip = "192.168.50.230"
+
 Vagrant.configure("2") do |config|
   config.vm.box = BOX_NAME
   config.vm.box_url = "#{BOX_URL}/#{BOX_NAME}.json"
-  config.vm.define "msklaoel9prix01"
-  config.vm.hostname = "msklaoel9prix01"
+  config.vm.define "#{vmhostname}"
+  config.vm.hostname = "#{vmhostname}"
   config.vm.provider :libvirt do |v|
     v.cpus = 4
     v.memory = 2048
@@ -37,7 +40,7 @@ Vagrant.configure("2") do |config|
     :dev => "br0",
     :mode => "bridge",
     :type => "bridge",
-    :ip => "192.168.50.230"
+    :ip => "#{vmip}"
 
   config.vm.synced_folder ".", "/vagrant",
     # owner: "vagrant", group: "vagrant"
@@ -53,10 +56,6 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
-    cat /etc/os-release
-    echo LANG=en_US.utf-8 >> /etc/environment
-    echo LC_ALL=en_US.utf-8 >> /etc/environment
-    timedatectl set-timezone Europe/Warsaw
     dnf update -y && dnf -y install container-tools oracle-epel-release-el9
     nmcli connection modify 'eth0' ipv4.never-default true
     nmcli connection modify 'System eth1' ipv4.routes "0.0.0.0/0 192.168.50.250 10"
@@ -66,6 +65,7 @@ Vagrant.configure("2") do |config|
     systemctl enable --now serial-getty@ttyS0.service
     # ip route delete default && ip route replace default via 192.168.50.250 metric 11
     ip a | grep inet
+    cat /etc/os-release
   SHELL
 
   config.vm.provision "shell", path: "./provisionprivx.sh", run: "once"

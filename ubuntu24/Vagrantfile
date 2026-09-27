@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.cpus = 4
-    libvirt.memory = 16384
+    libvirt.memory = 2048
     libvirt.nested = true
     libvirt.driver = "kvm"
     libvirt.disk_bus = "virtio"
@@ -45,6 +45,7 @@ Vagrant.configure("2") do |config|
       swapoff -a
       sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
       systemctl stop swap.target
+      systemctl mask swap.target
       systemctl enable --now serial-getty@ttyS0.service
       chmod 600 /etc/netplan/50-vagrant.yaml
       echo -e '      routes:\n      - to: "default"\n        via: "192.168.50.250"\n      dhcp4: false\n      dhcp6: false'   >> /etc/netplan/50-vagrant.yaml
