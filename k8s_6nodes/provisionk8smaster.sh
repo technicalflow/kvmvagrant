@@ -90,15 +90,18 @@ until [ "$(curl -k -s --connect-timeout 2 -o /dev/null -w "%{http_code}" "https:
 done
 
 # Install Calico
-echo "========================== Install Calico =========================="
+echo "========================== Install Tigera Operator =========================="
 curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml > /opt/tigera.yaml
 kubectl create -f /opt/tigera.yaml
 sleep 5
+echo "========================== Install Calico =========================="
 curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml > /opt/calico.yaml
 # Insert pod network CIDR in calico.yaml
 sed -i "s|cidr:.*|cidr: $PODNETWORK|g" /opt/calico.yaml
 sed -i 's|encapsulation:.*|encapsulation: None|g' /opt/calico.yaml
 kubectl create -f /opt/calico.yaml
+
+echo "========================== Done =========================="
 
 # Install MetalLB
 if [[ "$INSTALLMETALLB" == true ]]; then
@@ -179,4 +182,4 @@ rm -rf /root/.kube
 
 # kubectl get tigerastatus
 
-if [ $(hostname) == "k8sm1" ] ; then sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces && systemctl restart networking.service && sleep 1; fi
+# if [ $(hostname) == "k8sm1" ] ; then sed -i '/address 192.168.50..*/a \      gateway 192.168.50.250' /etc/network/interfaces && systemctl restart networking.service && sleep 1; fi

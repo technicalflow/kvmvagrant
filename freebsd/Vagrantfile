@@ -6,7 +6,7 @@ vmip = "192.168.50.242"
 
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/freebsd-13"
-  config.vm.hostname = "#{manager_hostname}"
+  config.vm.hostname = "#{vmhostname}"
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.cpus = 2
@@ -50,6 +50,7 @@ Vagrant.configure("2") do |config|
     pkg upgrade -y
     pkg install -y mc htop nano bash qemu-guest-agent
     sysrc qemu_guest_agent_enable=YES
+    service qemu-guest-agent start
     sysrc hostname="#{vmhostname}"
     chsh -s /usr/local/bin/bash vagrant
     sed -i '' 's/#{vmhostname}/#{vmhostname}.local/' /etc/hosts

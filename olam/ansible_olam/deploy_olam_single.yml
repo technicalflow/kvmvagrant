@@ -364,7 +364,9 @@
               filename: /var/run/receptor/receptor.sock
            
           - work-command:
-              worktype: {% if 'control' in group_names or 'hop' in group_names %}local{% else %}ansible-runner{% endif %}
+              worktype: {{ 'local' if ('control' in group_names or 'hop' in group_names) else 'ansible-runner' }}
+              # worktype: {% if 'control' in group_names or 'hop' in group_names %}local{% else %}ansible-runner{% endif %}
+              
               command: /var/lib/ol-automation-manager/venv/awx/bin/ansible-runner
               params: worker
               allowruntimeparams: true
