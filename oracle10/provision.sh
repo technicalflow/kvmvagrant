@@ -8,9 +8,9 @@ set -e
 
 IPA_DOMAIN="home.lab"
 IPA_REALM="HOME.LAB"
-IPA_HOSTNAME="msklaol10fipa01"
+# IPA_HOSTNAME=""
 IPA_HOSTNAME_FQDN="$IPA_HOSTNAME.$IPA_DOMAIN"
-IPA_IP_ADDRESS="192.168.50.50"
+# IPA_IP_ADDRESS=""
 DNS_FORWARDER="9.9.9.9"
 DIR_MANAGER_PASSWORD="simplepassword1"
 ADMIN_PASSWORD="simplepassword1"
@@ -92,3 +92,18 @@ echo ""
 echo "Please remember to obtain a Kerberos ticket before using CLI tools:"
 echo "kinit admin"
 echo "=============================================================================="
+
+# ipa user-add brian --password - -homedir=/home/brian --shell=/bin/bash
+# ipa host-add testvm.home.lab -force -ip-address=10.127.0.211 -password=simplepassword1
+
+# On Ubuntu join to FreeIPA server:
+# sudo apt update && sudo apt install freeipa-client
+# sudo ipa-client-install --mkhomedir 
+
+# Or automated on host with OTP:
+# ipa host-add testvm.home.lab -force -ip-address=10.127.0.211 -password=simplepassword1
+# and on the client machine:
+# sudo ipa-client-install --password=simplepassword1 --mkhomedir
+
+# ipa help topics
+# ipa user-show user1 --all --raw

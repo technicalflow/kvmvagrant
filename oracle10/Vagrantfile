@@ -64,9 +64,9 @@ Vagrant.configure("2") do |config|
     # nmcli connection modify eth1 ipv4.routes "0.0.0.0/0 192.168.50.250 10"
     nmcli connection modify eth1 ipv4.route-metric 10
     nmcli connection modify eth1 ipv4.gateway "192.168.50.250"
-    nmcli connection modify eth1 ipv4.dns "192.168.50.250" || true
-    nmcli connection modify eth1 ipv4.ignore-auto-dns yes || true
-    nmcli connection modify eth1 ipv6.ignore-auto-dns yes || true
+    nmcli connection modify eth1 ipv4.dns "192.168.50.250"
+    nmcli connection modify eth1 ipv4.ignore-auto-dns yes
+    nmcli connection modify eth1 ipv6.ignore-auto-dns yes
     nmcli c down eth1 && nmcli c up eth1
     # systemctl enable --now serial-getty@ttyS0.service
     # ip route delete default && ip route replace default via 192.168.50.250 metric 11
@@ -74,7 +74,7 @@ Vagrant.configure("2") do |config|
     cat /etc/os-release
   SHELL
 
-  config.vm.provision "shell", path: "./provision.sh", run: "once"
+  config.vm.provision "shell", path: "./provision.sh", env: {"IPA_HOSTNAME" => "#{vmhostname}", "IPA_IP_ADDRESS" => "#{vmip}"}, run: "once"
 
   # Provision everything on the first run
   # config.vm.provision "shell", path: "scripts/install.sh"

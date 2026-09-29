@@ -142,7 +142,7 @@ build {
       "export _IMAGE=\"output-debian-13/packer-debian-13\"",
       "export LIBGUESTFS_BACKEND=direct",
       "sudo qemu-img convert -f qcow2 -O qcow2 \"$_IMAGE\" \"$_IMAGE.convert\" && sudo rm -rf \"$_IMAGE\"",
-      "sudo chmod a+r /boot/vmlinuz*",
+#      "sudo chmod a+r /boot/vmlinuz*",
       "sudo LIBGUESTFS_BACKEND=direct virt-sysprep --operations defaults,machine-id,-ssh-userdir,-customize -a \"$_IMAGE.convert\"",
       "sudo LIBGUESTFS_BACKEND=direct virt-customize --no-network -a \"$_IMAGE.convert\" --delete \"/var/lib/*/random-seed\" --firstboot-command \"ssh-keygen -A && systemctl restart sshd.service\"",
       "sudo LIBGUESTFS_BACKEND=direct virt-sparsify --in-place \"$_IMAGE.convert\"",

@@ -99,6 +99,7 @@ curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manife
 # Insert pod network CIDR in calico.yaml
 sed -i "s|cidr:.*|cidr: $PODNETWORK|g" /opt/calico.yaml
 sed -i 's|encapsulation:.*|encapsulation: None|g' /opt/calico.yaml
+sed -i '/^  calicoNetwork:/a\    nodeAddressAutodetectionV4:\n      cidrs:\n      - 192.168.67.0/24' /opt/calico.yaml
 kubectl create -f /opt/calico.yaml
 
 echo "========================== Done =========================="
