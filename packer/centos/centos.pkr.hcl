@@ -12,7 +12,6 @@ packer {
 }
 
 # ─── Variables ───────────────────────────────────────────────────────────────
-
 variable "iso_url" {
   type    = string
   # default = "https://ftp.osuosl.org/pub/centos-stream/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
@@ -48,6 +47,12 @@ variable "cpus" {
 variable "memory" {
   type    = number
   default = 4096
+}
+
+variable "timeout" {
+  type        = string
+  default     = "30m"
+  description = "Timeout for building the image"
 }
 
 # ─── Builder ─────────────────────────────────────────────────────────────────
@@ -93,10 +98,11 @@ source "qemu" "centos-10" {
   ssh_username           = var.ssh_username
   ssh_password           = var.ssh_password
   ssh_port               = 22
-  ssh_timeout            = "120m"
+  ssh_timeout            = "20m"
   ssh_read_write_timeout = "600s"
   temporary_key_pair_type     = "ed25519"
 
+  shutdown_timeout = var.timeout
   shutdown_command = "sudo shutdown -h now"
 
   vnc_bind_address = "0.0.0.0"
@@ -139,7 +145,7 @@ build {
       "export _IMAGE=\"output-centos-10/packer-centos-10\"",
       "export LIBGUESTFS_BACKEND=direct",
       "sudo qemu-img convert -f qcow2 -O qcow2 \"$_IMAGE\" \"$_IMAGE.convert\" && sudo rm -rf \"$_IMAGE\"",
-      "sudo chmod a+r /boot/vmlinuz*",
+#      "sudo chmod a+r /boot/vmlinuz*",
       "sudo LIBGUESTFS_BACKEND=direct virt-sysprep --operations defaults,machine-id,-ssh-userdir,-customize -a \"$_IMAGE.convert\"",
       "sudo LIBGUESTFS_BACKEND=direct virt-customize --no-network -a \"$_IMAGE.convert\" --delete \"/var/lib/*/random-seed\" --delete \"/var/lib/wicked/*\" --firstboot-command \"/usr/local/bin/virt-sysprep-firstboot.sh\"",
       "sudo LIBGUESTFS_BACKEND=direct virt-sparsify --in-place \"$_IMAGE.convert\"",
