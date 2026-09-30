@@ -1,0 +1,107 @@
+---
+- name: Simple FreeIPA Management Playbook
+  hosts: ipaserver
+  become: true
+  collections:
+    - freeipa.ansible_freeipa
+
+  vars:
+    # It is recommended to pass this via Ansible Vault or extra-vars at runtime
+    ipaadmin_password: "Your_IPA_Admin_Password_Here"
+
+  tasks:
+    # 1. Manage a FreeIPA Group
+    - name: Ensure group 'developers' is present
+      ipa_group:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: developers
+        description: Development Team
+        state: present
+
+    # 2. Manage a FreeIPA User (with SSH public key)
+    - name: Ensure user 'jdoe' is present
+      ipa_user:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: jdoe
+        first: John
+        last: Doe
+        shell: /bin/bash
+        sshpubkey:
+          - "ssh-rsa"
+        state: present
+
+    # 3. Add the User to the Group
+    - name: Ensure 'jdoe' is a member of the 'developers' group
+      ipa_group:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: developers
+        user:
+          - jdoe
+        action: member
+        state: present
+
+    # 4. Manage a Password Policy for the group
+    - name: Ensure strict password policy for the 'developers' group
+      ipa_pwpolicy:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        group: developers
+        minlife: 24 # Minimum hours before password can be changed
+        maxlife: 90 # Days before password expires
+        minlength: 14 # Minimum password length
+        maxfail: 5 # Lockout after 5 failed attempts
+        state: present
+
+    # 5. Manage a FreeIPA Host
+    - name: Ensure host 'webserver01.example.local' is present
+      ipa_host:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: webserver01.example.local
+        ip_address: 192.168.1.50
+        state: present
+
+    # 6. Manage Hostgroups (for grouping servers)
+    - name: Ensure hostgroup 'webservers' exists
+      ipa_hostgroup:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: webservers
+        host:
+          - webserver01.example.local
+        state: present
+
+    # 7. Host-Based Access Control (HBAC)
+    - name: Allow developers to SSH into webservers
+      ipa_hbacrule:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: dev_ssh_web
+        usergroup: developers
+        hostgroup: webservers
+        hbacsvc:
+          - sshd
+        state: present
+
+    # 8. Sudo Rules
+    - name: Ensure sudo command '/bin/systemctl restart nginx' exists
+      ipa_sudocmd:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: /bin/systemctl restart nginx
+        state: present
+
+    - name: Allow developers to restart nginx on webservers
+      ipa_sudorule:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: dev_nginx_restart
+        usergroup: developers
+        hostgroup: webservers
+        allow_sudocmd:
+          - /bin/systemctl restart nginx
+        state: present
+
+    # 9. DNS Management
+    - name: Ensure a CNAME record exists for the web app
+      ipa_dnsrecord:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        zone_name: example.local
+        record_name: app
+        record_type: CNAME
+        record_value: webserver01.example.local
+        state: present

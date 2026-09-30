@@ -107,3 +107,43 @@ echo "==========================================================================
 
 # ipa help topics
 # ipa user-show user1 --all --raw
+
+# Add FreeIPA Replica
+# ipa-client-install --domain=corp.internal --realm=CORP.INTERNAL
+# first
+# kinit admin
+# ipa-replica-install --setup-ca --setup-dns --auto-forwarders
+
+# Check:
+# ipa server-find
+# ipa topologysuffix-show domain
+# ipa topologysegment-find domain
+# ipa topologysegment-add domain ipal-to-ipa3 ipa1.corp.internal ipa3.corp.internal
+# ipa topologysuffix-verify domain
+
+# Unbound configuration for FreeIPA DNS 
+# server:
+#     # internal is unsigned; without this, DNSSEC validation marks it bogus
+#     domain-insecure: "corp.internal"
+#     domain-insecure: "10.in-addr.arpa"
+#     # allow private IPs in answers for these domains (rebind protection)
+#     private-domain: "corp.internal"
+
+
+# forward-zone:
+#     name: "corp.internal."
+#     # forward to the FreeIPA servers
+#     forward-addr: 10.0.0.11 #FreeIPA server IP address
+#     forward-addr: 10.0.0.12 #FreeIPA 2nd server IP address
+
+# forward-zone:
+#     name: "0.0.10.in-addr.arpa." #match your actual reverse zone(s)
+#     forward-addr: 10.0.0.11
+#     forward-addr: 10.0.0.12
+
+# # The FreeBSD mail host isn't an IPA client, so nothing registers it automatically:
+# ipa dnsrecord-add corp.internal mail --a-rec=10.0.0.25 --a-create-reverse
+# ipa dnsrecord-add corp.internal @ --mx-rec="10 mail.corp.internal."
+# # Optional but useful: RFC 6186 SRV records so mail clients can autoconfigure.
+# ipa dnsrecord-add corp.internal _imaps._tcp --srv-rec="0 1 993 mail.corp.internal."
+# ipa dnsrecord-add corp. internal _submission._top --srv-rec="0 1 587 mail.corp.internal."

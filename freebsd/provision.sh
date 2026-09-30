@@ -88,6 +88,7 @@ server:
         hide-version: yes
         access-control: ${NETWORK} allow
         access-control: 127.0.0.0/8 allow
+        access-control: ::1 allow
         access-control: ${NETWORK6} allow
         root-hints: "/usr/local/etc/unbound/root.hints"
         # Add DNSSEC
