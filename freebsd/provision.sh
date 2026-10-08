@@ -125,6 +125,10 @@ chflags schg /etc/resolv.conf
 sysrc defaultrouter="${GATEWAYIP}"
 route change default "${GATEWAYIP}" 2>/dev/null || route add default "${GATEWAYIP}"
 
+#Enable IPv6
+sysrc ifconfig_vtnet1_ipv6="inet6 fd50:cafe::242 prefixlen 64"
+sysrc ipv6_defaultrouter="fd50:cafe::250"
+
 # Prevent other DHCP interfaces from overriding the default route.
 # "supersede routers" forces dhclient on every interface to always use
 # our gateway, ignoring whatever the DHCP server hands out.
@@ -154,6 +158,9 @@ pass out on \$ext_if all
 
 # By default block incoming on external interface
 block in on \$ext_if all
+
+# Allow all ICMPv6 (Required for IPv6 neighbor discovery and ping)
+pass quick on $ext_if inet6 proto ipv6-icmp all no state
 
 # Allow SSH from 192.168.0.0/16 (IPv4)
 pass in quick on \$ext_if inet proto tcp from 192.168.0.0/16 to any port 22
