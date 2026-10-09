@@ -55,6 +55,8 @@ Vagrant.configure("2") do |config|
 
     # Enable routing on eth1 and disable default route on eth0
     nmcli connection modify 'System eth0' ipv4.never-default yes
+    # Add option to execute qemu-ga commands from the guest
+    sed -i 's/,guest-exec,guest-exec-status//g' /etc/sysconfig/qemu-ga
     systemctl enable --now serial-getty@ttyS0.service
 
     cat /etc/os-release

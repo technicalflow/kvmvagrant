@@ -57,6 +57,11 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     dnf update -y && dnf -y install container-tools oracle-epel-release-el9
+    # Enable qemu guest agent exec for updates
+    sed -i '/^FILTER_RPC_ARGS=/ { h; s/^/#/; p; g; s/.*/FILTER_RPC_ARGS=""/; }' /etc/sysconfig/qemu-ga
+    # Modfy SELinux
+    setenforce 0
+    sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
     nmcli connection modify 'eth0' ipv4.never-default true
     nmcli connection modify 'System eth1' ipv4.routes "0.0.0.0/0 192.168.50.250 10"
     nmcli connection modify 'System eth1' ipv4.route-metric 10

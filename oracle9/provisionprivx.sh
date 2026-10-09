@@ -11,8 +11,6 @@ echo LC_ALL=en_US.utf-8 >> /etc/environment
 
 timedatectl set-timezone Europe/Warsaw
 
-systemctl enable --now serial-getty@ttyS0.service
-
 #Turn swap off
 swapoff -a
 systemctl stop swap.target
