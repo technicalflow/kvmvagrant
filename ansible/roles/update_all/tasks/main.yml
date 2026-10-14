@@ -43,8 +43,15 @@
     (ansible_distribution == "CentOS" and ansible_distribution_major_version | int >= 8)
 
 - name: Upgrade all packages (openSUSE / SLES)
-  community.general.zypper:
-    name: "*"
-    state: latest
+  ansible.builtin.command: zypper --non-interactive update
+  register: zypper_update
+  changed_when: "'Nothing to do.' not in zypper_update.stdout"
   become: true
   when: ansible_os_family == "Suse"
+  
+# - name: Upgrade all packages (openSUSE / SLES)
+#   community.general.zypper:
+#     name: "*"
+#     state: latest
+#   become: true
+#   when: ansible_os_family == "Suse"
