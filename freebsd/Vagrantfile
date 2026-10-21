@@ -5,7 +5,7 @@ vmhostname = "msklafb13dnss01"
 vmip = "192.168.50.242"
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "bento/freebsd-13"
+  config.vm.box = "bento/freebsd-14"
   config.vm.hostname = "#{vmhostname}"
 
   config.vm.provider :libvirt do |libvirt|
